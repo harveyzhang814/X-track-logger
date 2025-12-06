@@ -1,0 +1,90 @@
+# 故障排查指南
+
+## 问题：没有任何日志输出
+
+如果控制台没有任何日志，说明content.js可能没有执行。请按以下步骤排查：
+
+### 步骤1：检查扩展是否正确加载
+
+1. 打开 `chrome://extensions/`
+2. 确认"开发者模式"已开启（右上角开关）
+3. 找到"X推文追踪器"扩展
+4. 确认扩展已启用（开关是蓝色）
+5. 点击扩展卡片上的"重新加载"按钮（刷新图标）
+
+### 步骤2：检查扩展错误
+
+1. 在扩展管理页面，点击"X推文追踪器"下的"检查视图" → "service worker"
+2. 查看是否有错误信息
+3. 如果有错误，请记录错误信息
+
+### 步骤3：检查content script是否注入
+
+1. 打开 X.com 或 Twitter.com
+2. 按 F12 打开开发者工具
+3. 切换到 Console 标签
+4. 应该能看到 `[X推文追踪器] 脚本文件开始加载...` 的日志
+5. 如果没有，说明content script没有注入
+
+### 步骤4：手动检查文件
+
+在扩展管理页面：
+1. 点击"X推文追踪器"下的"检查视图" → "service worker"
+2. 在控制台中运行：
+```javascript
+chrome.runtime.getManifest()
+```
+3. 检查返回的manifest是否正确
+
+### 步骤5：检查manifest.json
+
+确认manifest.json中的配置：
+- `content_scripts` 中的 `matches` 包含 `https://twitter.com/*` 和 `https://x.com/*`
+- `js` 数组中包含 `"content.js"`
+- 文件路径正确
+
+### 步骤6：重新安装扩展
+
+如果以上都不行，尝试完全重新安装：
+
+1. 在扩展管理页面，点击"移除"删除扩展
+2. 关闭所有X/Twitter标签页
+3. 重新点击"加载已解压的扩展程序"
+4. 选择项目文件夹
+5. 重新打开X.com
+
+### 步骤7：检查文件权限
+
+确保所有文件都有读取权限：
+```bash
+chmod 644 *.js *.json *.html *.css
+chmod 755 icons/
+```
+
+### 步骤8：检查控制台过滤器
+
+确保控制台没有过滤掉日志：
+1. 在Console标签中，点击过滤器图标
+2. 确保"All levels"或"Verbose"已选中
+3. 确保没有过滤掉包含"X推文追踪器"的日志
+
+### 步骤9：测试简化版本
+
+如果还是不行，可以创建一个最简单的测试版本：
+
+在content.js最开始添加：
+```javascript
+console.log('TEST: Content script loaded!');
+alert('Content script loaded!');
+```
+
+如果连这个都不显示，说明content script根本没有执行。
+
+### 常见问题
+
+1. **扩展已禁用**：检查扩展是否被禁用
+2. **文件路径错误**：确保manifest.json中的文件路径正确
+3. **语法错误**：检查content.js是否有语法错误
+4. **URL不匹配**：确保访问的URL匹配manifest中的matches规则
+5. **浏览器缓存**：尝试清除浏览器缓存或使用无痕模式
+
