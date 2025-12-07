@@ -47,7 +47,7 @@
 
 1. **克隆仓库**
    ```bash
-   git clone https://github.com/yourusername/X_tracker.git
+   git clone https://github.com/harveyzhang814/X-track-logger.git
    cd X_tracker
    ```
 
@@ -68,7 +68,7 @@
 
 #### 方式三：从GitHub Releases安装
 
-1. 访问 [Releases页面](https://github.com/yourusername/X_tracker/releases)
+1. 访问 [Releases页面](https://github.com/harveyzhang814/X-track-logger/releases)
 2. 下载最新版本的 `.crx` 文件
 3. 将文件拖拽到 `chrome://extensions/` 页面完成安装
 
@@ -197,7 +197,7 @@ X_tracker/
 
 1. **克隆项目**
    ```bash
-   git clone https://github.com/yourusername/X_tracker.git
+   git clone https://github.com/harveyzhang814/X-track-logger.git
    cd X_tracker
    ```
 
@@ -345,8 +345,8 @@ limitations under the License.
 
 ## 📮 联系方式
 
-- **问题反馈**：[GitHub Issues](https://github.com/yourusername/X_tracker/issues)
-- **功能建议**：[GitHub Discussions](https://github.com/yourusername/X_tracker/discussions)
+- **问题反馈**：[GitHub Issues](https://github.com/harveyzhang814/X-track-logger/issues)
+- **功能建议**：[GitHub Discussions](https://github.com/harveyzhang814/X-track-logger/discussions)
 
 ---
 
