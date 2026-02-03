@@ -287,6 +287,14 @@ A: 目前仅支持Chrome浏览器。未来可能会支持其他基于Chromium的
 
 A: 可以使用悬浮窗刷新按钮或popup中的刷新按钮来重新加载保存按钮。如果问题持续，请检查浏览器控制台是否有错误信息。
 
+### Q: 加载扩展时提示 "This extension includes the key file... private_key.pem"？
+
+A: 私钥文件不应放在扩展目录内（否则会被 Chrome 一并加载并警告）。请将 `private_key.pem` 移到项目外再加载扩展，例如：
+   ```bash
+   mv /Users/harveyzhang96/Projects/X_tracker/private_key.pem /Users/harveyzhang96/Projects/
+   ```
+   以后若需要打包签名扩展，再从该位置使用私钥即可。扩展的稳定 ID 由 manifest 里的公钥决定，不依赖项目目录内是否有 .pem 文件。
+
 ### Q: 如何备份我的数据？
 
 A: 使用popup中的导出功能，可以将所有保存的推文导出为JSON格式文件。

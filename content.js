@@ -14,6 +14,11 @@
   // 保存按钮的类名
   const SAVE_BUTTON_CLASS = 'x-tracker-save-btn';
   const SAVED_BUTTON_CLASS = 'x-tracker-saved-btn';
+  const FOCUS_HIGHLIGHT_UNSAVED = 'x-tracker-tweet-focus-unsaved';
+  const FOCUS_HIGHLIGHT_SAVED = 'x-tracker-tweet-focus-saved';
+
+  // 当前焦点推文（用于边框高亮）
+  let currentFocusTweet = null;
 
   // 提取推文信息的函数
   function extractTweetInfo(tweetElement) {
@@ -193,7 +198,10 @@
     }
   }
 
-  // 创建保存按钮 - 使用星形图标，高亮黄色
+  // 保存图标（磁盘样式）
+  const SAVE_ICON_PATH = 'M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm2 16H5V5h11.17L19 7.83V19zm-7-7c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zM6 6h9v4H6z';
+
+  // 创建保存按钮 - 仅磁盘图标，无文字
   function createSaveButton() {
     const button = document.createElement('button');
     button.className = SAVE_BUTTON_CLASS;
@@ -201,14 +209,13 @@
     button.setAttribute('aria-label', '保存推文');
     button.innerHTML = `
       <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        <path d="${SAVE_ICON_PATH}"/>
       </svg>
-      <span>保存</span>
     `;
     return button;
   }
 
-  // 创建已保存按钮 - 实心星形图标，高亮橙色
+  // 创建已保存按钮 - 仅磁盘图标，无文字
   function createSavedButton() {
     const button = document.createElement('button');
     button.className = SAVED_BUTTON_CLASS;
@@ -216,9 +223,8 @@
     button.setAttribute('aria-label', '已保存推文');
     button.innerHTML = `
       <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        <path d="${SAVE_ICON_PATH}"/>
       </svg>
-      <span>已保存</span>
     `;
     return button;
   }
@@ -748,6 +754,56 @@
     setTimeout(() => processTweets(), 1500);
   }
 
+  // 设置焦点推文高亮：节流 mousemove + elementFromPoint，更新 currentFocusTweet 与高亮类
+  function setupFocusTweetHighlight() {
+    const THROTTLE_MS = 60;
+    let lastRun = 0;
+    let scheduled = null;
+    let lastEvent = null;
+
+    function updateFocus(e) {
+      if (!e) return;
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const tweet = el?.closest('article[data-testid="tweet"]');
+      if (tweet === currentFocusTweet) return;
+      if (currentFocusTweet) {
+        currentFocusTweet.classList.remove(FOCUS_HIGHLIGHT_UNSAVED, FOCUS_HIGHLIGHT_SAVED);
+      }
+      currentFocusTweet = tweet || null;
+      if (currentFocusTweet) {
+        const isSaved = currentFocusTweet.querySelector(`.${SAVED_BUTTON_CLASS}`);
+        currentFocusTweet.classList.add(isSaved ? FOCUS_HIGHLIGHT_SAVED : FOCUS_HIGHLIGHT_UNSAVED);
+      }
+    }
+
+    function throttledMousemove(e) {
+      lastEvent = e;
+      const now = Date.now();
+      if (now - lastRun >= THROTTLE_MS) {
+        lastRun = now;
+        updateFocus(e);
+        if (scheduled) {
+          clearTimeout(scheduled);
+          scheduled = null;
+        }
+      } else if (!scheduled) {
+        scheduled = setTimeout(() => {
+          scheduled = null;
+          lastRun = Date.now();
+          updateFocus(lastEvent);
+        }, THROTTLE_MS);
+      }
+    }
+
+    document.addEventListener('mousemove', throttledMousemove, { passive: true });
+    document.addEventListener('mouseleave', () => {
+      if (currentFocusTweet) {
+        currentFocusTweet.classList.remove(FOCUS_HIGHLIGHT_UNSAVED, FOCUS_HIGHLIGHT_SAVED);
+        currentFocusTweet = null;
+      }
+    });
+  }
+
   // 创建悬浮窗
   function createFloatingWidget() {
     // 检查是否已存在悬浮窗
@@ -800,7 +856,10 @@
       
       // 立即开始观察，以便捕获所有DOM变化
       startObserving();
-      
+
+      // 焦点推文边框高亮（mousemove 跟踪）
+      setupFocusTweetHighlight();
+
       // 等待页面加载完成后再处理推文
       const processWhenReady = () => {
         // 多次尝试处理，因为X网站是动态加载的

@@ -4,13 +4,11 @@
 .x-tracker-saved-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
+  justify-content: center;
+  padding: 8px;
   border: none;
   border-radius: 20px;
   background-color: transparent;
-  font-size: 13px;
-  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -51,11 +49,6 @@
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-}
-
-.x-tracker-save-btn span,
-.x-tracker-saved-btn span {
-  line-height: 1;
 }
 
 /* 通知样式 */
@@ -140,6 +133,19 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* 焦点推文边框高亮：未保存蓝色，已保存绿色（与保存图标一致） */
+.x-tracker-tweet-focus-unsaved {
+  box-shadow: 0 0 0 2px rgba(29, 155, 240, 0.6);
+  transition: box-shadow 0.15s ease;
+  border-radius: 16px;
+}
+
+.x-tracker-tweet-focus-saved {
+  box-shadow: 0 0 0 2px rgba(0, 186, 124, 0.6);
+  transition: box-shadow 0.15s ease;
+  border-radius: 16px;
 }
 
 /* 深色模式适配 */
