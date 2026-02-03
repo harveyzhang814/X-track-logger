@@ -20,6 +20,16 @@
   // 当前焦点推文（用于边框高亮）
   let currentFocusTweet = null;
 
+  // 保存焦点推文快捷键配置（从 storage 读取，无则用默认）
+  const SHORTCUT_STORAGE_KEY = 'xTrackerSaveFocusedShortcut';
+  const DEFAULT_SHORTCUT = { key: 'S', ctrlKey: true, shiftKey: true, altKey: false, metaKey: false };
+  let saveFocusedShortcut = { ...DEFAULT_SHORTCUT };
+
+  // 移除焦点已保存记录快捷键配置
+  const UNSAVE_SHORTCUT_STORAGE_KEY = 'xTrackerUnsaveFocusedShortcut';
+  const DEFAULT_UNSAVE_SHORTCUT = { key: 'D', ctrlKey: true, shiftKey: true, altKey: false, metaKey: false };
+  let unsaveFocusedShortcut = { ...DEFAULT_UNSAVE_SHORTCUT };
+
   // 提取推文信息的函数
   function extractTweetInfo(tweetElement) {
     try {
@@ -623,6 +633,179 @@
     }, 2000);
   }
 
+  // 判断 keydown 是否与当前快捷键配置一致
+  function matchesSaveFocusedShortcut(e) {
+    const k = saveFocusedShortcut.key;
+    const keyMatch = (e.key && k && (e.key === k || e.key.toUpperCase() === k || e.key.toLowerCase() === k.toLowerCase()));
+    return keyMatch &&
+      !!e.ctrlKey === !!saveFocusedShortcut.ctrlKey &&
+      !!e.shiftKey === !!saveFocusedShortcut.shiftKey &&
+      !!e.altKey === !!saveFocusedShortcut.altKey &&
+      !!e.metaKey === !!saveFocusedShortcut.metaKey;
+  }
+
+  function matchesUnsaveFocusedShortcut(e) {
+    const k = unsaveFocusedShortcut.key;
+    const keyMatch = (e.key && k && (e.key === k || e.key.toUpperCase() === k || e.key.toLowerCase() === k.toLowerCase()));
+    return keyMatch &&
+      !!e.ctrlKey === !!unsaveFocusedShortcut.ctrlKey &&
+      !!e.shiftKey === !!unsaveFocusedShortcut.shiftKey &&
+      !!e.altKey === !!unsaveFocusedShortcut.altKey &&
+      !!e.metaKey === !!unsaveFocusedShortcut.metaKey;
+  }
+
+  // 为推文上的保存/已保存按钮创建统一的点击处理（供快捷键保存后绑定用）
+  function createTweetButtonClickHandler(tweetElement) {
+    return async function handleToggle(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const tweetInfo = extractTweetInfo(tweetElement);
+      if (!tweetInfo) return;
+      const isSaved = await isTweetSaved(tweetInfo.id);
+      const container = e.currentTarget.parentElement;
+      const currentBtn = e.currentTarget;
+      if (isSaved) {
+        const success = await unsaveTweet(tweetInfo.id);
+        if (success) {
+          const newBtn = createSaveButton();
+          container.replaceChild(newBtn, currentBtn);
+          newBtn.addEventListener('click', createTweetButtonClickHandler(tweetElement));
+        }
+      } else {
+        const success = await saveTweet(tweetInfo);
+        if (success) {
+          const newBtn = createSavedButton();
+          container.replaceChild(newBtn, currentBtn);
+          newBtn.addEventListener('click', createTweetButtonClickHandler(tweetElement));
+          showNotification('推文已保存！');
+        } else {
+          alert('保存失败，请重试');
+        }
+      }
+    };
+  }
+
+  // 快捷键：保存焦点推文
+  async function saveFocusedTweetOnShortcut() {
+    if (!currentFocusTweet) {
+      showNotification('请将鼠标移到要保存的推文上');
+      return;
+    }
+    const alreadySaved = currentFocusTweet.querySelector(`.${SAVED_BUTTON_CLASS}`);
+    if (alreadySaved) {
+      showNotification('该推文已保存');
+      return;
+    }
+    const tweetInfo = extractTweetInfo(currentFocusTweet);
+    if (!tweetInfo) {
+      showNotification('无法提取推文信息');
+      return;
+    }
+    const success = await saveTweet(tweetInfo);
+    if (!success) {
+      showNotification('保存失败，请重试');
+      return;
+    }
+    const saveBtn = currentFocusTweet.querySelector(`.${SAVE_BUTTON_CLASS}`);
+    if (saveBtn) {
+      const buttonContainer = saveBtn.parentElement;
+      const newBtn = createSavedButton();
+      buttonContainer.replaceChild(newBtn, saveBtn);
+      newBtn.addEventListener('click', createTweetButtonClickHandler(currentFocusTweet));
+    }
+    currentFocusTweet.classList.remove(FOCUS_HIGHLIGHT_UNSAVED);
+    currentFocusTweet.classList.add(FOCUS_HIGHLIGHT_SAVED);
+    showNotification('推文已保存！');
+  }
+
+  // 快捷键：移除焦点已保存记录
+  async function unsaveFocusedTweetOnShortcut() {
+    if (!currentFocusTweet) {
+      showNotification('请将鼠标移到要操作的推文上');
+      return;
+    }
+    const savedBtn = currentFocusTweet.querySelector(`.${SAVED_BUTTON_CLASS}`);
+    if (!savedBtn) {
+      showNotification('该推文未保存');
+      return;
+    }
+    const tweetInfo = extractTweetInfo(currentFocusTweet);
+    if (!tweetInfo) {
+      showNotification('无法提取推文信息');
+      return;
+    }
+    const success = await unsaveTweet(tweetInfo.id);
+    if (!success) {
+      showNotification('移除失败，请重试');
+      return;
+    }
+    const buttonContainer = savedBtn.parentElement;
+    const newBtn = createSaveButton();
+    buttonContainer.replaceChild(newBtn, savedBtn);
+    newBtn.addEventListener('click', createTweetButtonClickHandler(currentFocusTweet));
+    currentFocusTweet.classList.remove(FOCUS_HIGHLIGHT_SAVED);
+    currentFocusTweet.classList.add(FOCUS_HIGHLIGHT_UNSAVED);
+    showNotification('已移除保存');
+  }
+
+  // 加载快捷键配置并监听 storage 变化
+  function loadSaveFocusedShortcut() {
+    chrome.storage.local.get([SHORTCUT_STORAGE_KEY], (result) => {
+      if (result[SHORTCUT_STORAGE_KEY] && typeof result[SHORTCUT_STORAGE_KEY] === 'object') {
+        saveFocusedShortcut = { ...DEFAULT_SHORTCUT, ...result[SHORTCUT_STORAGE_KEY] };
+      }
+    });
+  }
+
+  function loadUnsaveFocusedShortcut() {
+    chrome.storage.local.get([UNSAVE_SHORTCUT_STORAGE_KEY], (result) => {
+      if (result[UNSAVE_SHORTCUT_STORAGE_KEY] && typeof result[UNSAVE_SHORTCUT_STORAGE_KEY] === 'object') {
+        unsaveFocusedShortcut = { ...DEFAULT_UNSAVE_SHORTCUT, ...result[UNSAVE_SHORTCUT_STORAGE_KEY] };
+      }
+    });
+  }
+
+  // 注册快捷键监听与 storage 监听（先判断移除再判断保存，避免同组合时重复执行）
+  function setupSaveFocusedShortcut() {
+    loadSaveFocusedShortcut();
+    loadUnsaveFocusedShortcut();
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName !== 'local') return;
+      if (changes[SHORTCUT_STORAGE_KEY]) {
+        const next = changes[SHORTCUT_STORAGE_KEY].newValue;
+        if (next && typeof next === 'object') {
+          saveFocusedShortcut = { ...DEFAULT_SHORTCUT, ...next };
+        }
+      }
+      if (changes[UNSAVE_SHORTCUT_STORAGE_KEY]) {
+        const next = changes[UNSAVE_SHORTCUT_STORAGE_KEY].newValue;
+        if (next && typeof next === 'object') {
+          unsaveFocusedShortcut = { ...DEFAULT_UNSAVE_SHORTCUT, ...next };
+        }
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      const matchSave = matchesSaveFocusedShortcut(e);
+      const matchUnsave = matchesUnsaveFocusedShortcut(e);
+      if (!matchSave && !matchUnsave) return;
+      e.preventDefault();
+      e.stopPropagation();
+      // 快捷键相同时根据焦点推文状态决定执行保存还是移除，避免固定顺序导致其中一个被阻拦
+      if (matchSave && matchUnsave) {
+        const isSaved = currentFocusTweet && currentFocusTweet.querySelector(`.${SAVED_BUTTON_CLASS}`);
+        if (isSaved) {
+          unsaveFocusedTweetOnShortcut();
+        } else {
+          saveFocusedTweetOnShortcut();
+        }
+      } else if (matchUnsave) {
+        unsaveFocusedTweetOnShortcut();
+      } else {
+        saveFocusedTweetOnShortcut();
+      }
+    }, true);
+  }
+
   // 处理所有推文
   function processTweets() {
     try {
@@ -859,6 +1042,9 @@
 
       // 焦点推文边框高亮（mousemove 跟踪）
       setupFocusTweetHighlight();
+
+      // 保存焦点推文快捷键
+      setupSaveFocusedShortcut();
 
       // 等待页面加载完成后再处理推文
       const processWhenReady = () => {

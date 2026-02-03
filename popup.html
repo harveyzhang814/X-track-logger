@@ -26,9 +26,15 @@
             <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
           </svg>
         </button>
+        <button id="settingsBtn" class="icon-btn" title="设置">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+          </svg>
+        </button>
       </div>
     </header>
-    
+
+    <div id="mainPanel" class="panel panel-active">
     <div class="stats">
       <span id="tweetCount">0 条推文</span>
       <select id="filterType">
@@ -54,6 +60,29 @@
         </svg>
         <p>还没有保存任何推文</p>
         <p class="hint">在X网页上点击推文旁的"保存"按钮即可保存</p>
+      </div>
+    </div>
+    </div>
+
+    <div id="settingsPanel" class="panel">
+      <h2 class="settings-title">设置</h2>
+      <div class="settings-section">
+        <label class="settings-label">保存焦点推文快捷键</label>
+        <div class="shortcut-row">
+          <span id="shortcutDisplay" class="shortcut-display">当前：Ctrl+Shift+S</span>
+          <button id="recordShortcutBtn" type="button" class="record-shortcut-btn">录制快捷键</button>
+          <button id="resetShortcutBtn" type="button" class="reset-shortcut-btn">恢复默认</button>
+        </div>
+        <input type="text" id="shortcutInput" class="shortcut-input" readonly placeholder="点击「录制快捷键」后在此按下组合键" autocomplete="off" />
+      </div>
+      <div class="settings-section">
+        <label class="settings-label">移除焦点已保存记录快捷键</label>
+        <div class="shortcut-row">
+          <span id="shortcutDisplayUnsave" class="shortcut-display">当前：Ctrl+Shift+D</span>
+          <button id="recordShortcutBtnUnsave" type="button" class="record-shortcut-btn">录制快捷键</button>
+          <button id="resetShortcutBtnUnsave" type="button" class="reset-shortcut-btn">恢复默认</button>
+        </div>
+        <input type="text" id="shortcutInputUnsave" class="shortcut-input" readonly placeholder="点击「录制快捷键」后在此按下组合键" autocomplete="off" />
       </div>
     </div>
   </div>

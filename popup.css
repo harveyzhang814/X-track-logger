@@ -310,3 +310,95 @@ header h1 {
   background: rgb(113, 118, 123);
 }
 
+/* 主面板 / 设置面板切换 */
+.panel {
+  display: none;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.panel.panel-active {
+  display: flex;
+}
+
+#settingsPanel {
+  padding: 16px;
+}
+
+.settings-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgb(47, 51, 54);
+}
+
+.settings-section {
+  margin-bottom: 16px;
+}
+
+.settings-label {
+  display: block;
+  font-size: 14px;
+  color: rgb(231, 233, 234);
+  margin-bottom: 8px;
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.shortcut-display {
+  font-size: 14px;
+  color: rgb(113, 118, 123);
+}
+
+.record-shortcut-btn,
+.reset-shortcut-btn {
+  padding: 6px 12px;
+  border: 1px solid rgb(47, 51, 54);
+  border-radius: 6px;
+  background-color: transparent;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.record-shortcut-btn:hover,
+.reset-shortcut-btn:hover {
+  background-color: rgba(113, 118, 123, 0.1);
+  border-color: rgb(113, 118, 123);
+}
+
+.record-shortcut-btn.recording {
+  border-color: rgb(29, 155, 240);
+  color: rgb(29, 155, 240);
+}
+
+.shortcut-input {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  margin-top: 4px;
+  border: 1px solid rgb(47, 51, 54);
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 13px;
+  outline: none;
+}
+
+.shortcut-input:focus {
+  border-color: rgb(113, 118, 123);
+}
+
+.shortcut-input::placeholder {
+  color: rgb(113, 118, 123);
+}
+

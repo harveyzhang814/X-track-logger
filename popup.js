@@ -3,6 +3,60 @@
 let savedTweets = {};
 let currentFilter = 'all';
 
+// 保存焦点推文快捷键（与 content.js 一致）
+const SHORTCUT_STORAGE_KEY = 'xTrackerSaveFocusedShortcut';
+const DEFAULT_SHORTCUT = { key: 'S', ctrlKey: true, shiftKey: true, altKey: false, metaKey: false };
+// 移除焦点已保存记录快捷键
+const UNSAVE_SHORTCUT_STORAGE_KEY = 'xTrackerUnsaveFocusedShortcut';
+const DEFAULT_UNSAVE_SHORTCUT = { key: 'D', ctrlKey: true, shiftKey: true, altKey: false, metaKey: false };
+
+function shortcutToDisplayString(s) {
+  if (!s || typeof s.key !== 'string') return 'Ctrl+Shift+S';
+  const parts = [];
+  if (s.ctrlKey) parts.push('Ctrl');
+  if (s.altKey) parts.push('Alt');
+  if (s.metaKey) parts.push('Cmd');
+  if (s.shiftKey) parts.push('Shift');
+  parts.push(s.key.length === 1 ? s.key.toUpperCase() : s.key);
+  return parts.join('+');
+}
+
+function loadShortcutSetting() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get([SHORTCUT_STORAGE_KEY], (result) => {
+      const s = result[SHORTCUT_STORAGE_KEY];
+      resolve(s && typeof s === 'object' ? { ...DEFAULT_SHORTCUT, ...s } : { ...DEFAULT_SHORTCUT });
+    });
+  });
+}
+
+function updateShortcutDisplay(shortcut) {
+  const el = document.getElementById('shortcutDisplay');
+  if (el) el.textContent = '当前：' + shortcutToDisplayString(shortcut);
+}
+
+function saveShortcutToStorage(shortcut) {
+  chrome.storage.local.set({ [SHORTCUT_STORAGE_KEY]: shortcut });
+}
+
+function loadUnsaveShortcutSetting() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get([UNSAVE_SHORTCUT_STORAGE_KEY], (result) => {
+      const s = result[UNSAVE_SHORTCUT_STORAGE_KEY];
+      resolve(s && typeof s === 'object' ? { ...DEFAULT_UNSAVE_SHORTCUT, ...s } : { ...DEFAULT_UNSAVE_SHORTCUT });
+    });
+  });
+}
+
+function updateUnsaveShortcutDisplay(shortcut) {
+  const el = document.getElementById('shortcutDisplayUnsave');
+  if (el) el.textContent = '当前：' + shortcutToDisplayString(shortcut);
+}
+
+function saveUnsaveShortcutToStorage(shortcut) {
+  chrome.storage.local.set({ [UNSAVE_SHORTCUT_STORAGE_KEY]: shortcut });
+}
+
 // 更新存储状态显示
 function updateStorageStatus(status, message = '') {
   const statusIndicator = document.getElementById('statusIndicator');
@@ -397,6 +451,128 @@ document.getElementById('clearBtn').addEventListener('click', clearAll);
 document.getElementById('filterType').addEventListener('change', (e) => {
   currentFilter = e.target.value;
   renderTweets();
+});
+
+// 设置面板与主面板切换
+const mainPanel = document.getElementById('mainPanel');
+const settingsPanel = document.getElementById('settingsPanel');
+const settingsBtn = document.getElementById('settingsBtn');
+const recordShortcutBtn = document.getElementById('recordShortcutBtn');
+const resetShortcutBtn = document.getElementById('resetShortcutBtn');
+const shortcutInput = document.getElementById('shortcutInput');
+const shortcutDisplay = document.getElementById('shortcutDisplay');
+
+settingsBtn.addEventListener('click', () => {
+  const inSettings = settingsPanel.classList.contains('panel-active');
+  if (inSettings) {
+    mainPanel.classList.add('panel-active');
+    settingsPanel.classList.remove('panel-active');
+  } else {
+    mainPanel.classList.remove('panel-active');
+    settingsPanel.classList.add('panel-active');
+    loadShortcutSetting().then(updateShortcutDisplay);
+    loadUnsaveShortcutSetting().then(updateUnsaveShortcutDisplay);
+  }
+});
+
+// 录制快捷键
+let recordingKeydown = null;
+function stopRecording() {
+  if (recordingKeydown) {
+    shortcutInput.removeEventListener('keydown', recordingKeydown);
+    recordingKeydown = null;
+  }
+  recordShortcutBtn.classList.remove('recording');
+  shortcutInput.placeholder = '点击「录制快捷键」后在此按下组合键';
+  shortcutInput.blur();
+}
+recordShortcutBtn.addEventListener('click', () => {
+  stopRecording();
+  shortcutInput.value = '';
+  shortcutInput.placeholder = '请按下组合键...';
+  recordShortcutBtn.classList.add('recording');
+  shortcutInput.focus();
+  recordingKeydown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const key = e.key;
+    if (key === 'Control' || key === 'Alt' || key === 'Shift' || key === 'Meta') return;
+    const shortcut = {
+      key: key.length === 1 ? key.toUpperCase() : key,
+      ctrlKey: !!e.ctrlKey,
+      shiftKey: !!e.shiftKey,
+      altKey: !!e.altKey,
+      metaKey: !!e.metaKey
+    };
+    saveShortcutToStorage(shortcut);
+    updateShortcutDisplay(shortcut);
+    shortcutInput.value = shortcutToDisplayString(shortcut);
+    stopRecording();
+  };
+  shortcutInput.addEventListener('keydown', recordingKeydown);
+});
+
+resetShortcutBtn.addEventListener('click', () => {
+  saveShortcutToStorage(DEFAULT_SHORTCUT);
+  updateShortcutDisplay(DEFAULT_SHORTCUT);
+  shortcutInput.value = '';
+  showToast('已恢复默认快捷键');
+});
+
+const shortcutDisplayUnsave = document.getElementById('shortcutDisplayUnsave');
+const recordShortcutBtnUnsave = document.getElementById('recordShortcutBtnUnsave');
+const resetShortcutBtnUnsave = document.getElementById('resetShortcutBtnUnsave');
+const shortcutInputUnsave = document.getElementById('shortcutInputUnsave');
+
+let recordingKeydownUnsave = null;
+function stopRecordingUnsave() {
+  if (recordingKeydownUnsave) {
+    shortcutInputUnsave.removeEventListener('keydown', recordingKeydownUnsave);
+    recordingKeydownUnsave = null;
+  }
+  recordShortcutBtnUnsave.classList.remove('recording');
+  shortcutInputUnsave.placeholder = '点击「录制快捷键」后在此按下组合键';
+  shortcutInputUnsave.blur();
+}
+recordShortcutBtnUnsave.addEventListener('click', () => {
+  stopRecordingUnsave();
+  shortcutInputUnsave.value = '';
+  shortcutInputUnsave.placeholder = '请按下组合键...';
+  recordShortcutBtnUnsave.classList.add('recording');
+  shortcutInputUnsave.focus();
+  recordingKeydownUnsave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const key = e.key;
+    if (key === 'Control' || key === 'Alt' || key === 'Shift' || key === 'Meta') return;
+    const shortcut = {
+      key: key.length === 1 ? key.toUpperCase() : key,
+      ctrlKey: !!e.ctrlKey,
+      shiftKey: !!e.shiftKey,
+      altKey: !!e.altKey,
+      metaKey: !!e.metaKey
+    };
+    saveUnsaveShortcutToStorage(shortcut);
+    updateUnsaveShortcutDisplay(shortcut);
+    shortcutInputUnsave.value = shortcutToDisplayString(shortcut);
+    stopRecordingUnsave();
+  };
+  shortcutInputUnsave.addEventListener('keydown', recordingKeydownUnsave);
+});
+
+resetShortcutBtnUnsave.addEventListener('click', () => {
+  saveUnsaveShortcutToStorage(DEFAULT_UNSAVE_SHORTCUT);
+  updateUnsaveShortcutDisplay(DEFAULT_UNSAVE_SHORTCUT);
+  shortcutInputUnsave.value = '';
+  showToast('已恢复默认快捷键');
+});
+
+// 初始化设置页的快捷键显示（若当前在设置页会由切换时加载）
+loadShortcutSetting().then((s) => {
+  if (shortcutDisplay) shortcutDisplay.textContent = '当前：' + shortcutToDisplayString(s);
+});
+loadUnsaveShortcutSetting().then((s) => {
+  if (shortcutDisplayUnsave) shortcutDisplayUnsave.textContent = '当前：' + shortcutToDisplayString(s);
 });
 
 // 监听存储变化（通过轮询检查，因为IndexedDB没有change事件）
