@@ -38,6 +38,12 @@
   // 类型识别与按钮逻辑见 docs/逻辑说明.md
   const DEBUG_TYPE_DETECTION = false; // 设为 true 时在控制台输出判定信号，便于排查
 
+  // 手动回复串：Shift + 连续点击多条收藏按钮，以时间最早为母 tweet，其余为 reply
+  const THREAD_FINALIZE_DELAY_MS = 2000;
+  let threadBuffer = [];
+  let threadFinalizeTimer = null;
+  let shiftKeyHeld = false;
+
   // 提取推文信息的函数
   function extractTweetInfo(tweetElement) {
     try {
@@ -280,79 +286,104 @@
   }
 
 
+  // 扩展上下文失效时提示（如扩展被重新加载后页面未刷新）
+  function handleExtensionInvalidated(error) {
+    if (error && String(error.message || error).includes('invalidated')) {
+      if (typeof showNotification === 'function') {
+        showNotification('扩展已重新加载，请刷新页面后重试');
+      }
+    }
+  }
+
   // 通过 background script 检查推文是否已保存
   async function isTweetSaved(tweetId) {
-    try {
-      return new Promise((resolve) => {
+    return new Promise((resolve) => {
+      try {
         chrome.runtime.sendMessage(
           { action: 'isTweetSaved', tweetId },
           (response) => {
-            if (chrome.runtime.lastError) {
-              console.error('检查推文保存状态时出错:', chrome.runtime.lastError);
-              resolve(false);
-            } else {
+            try {
+              if (chrome.runtime.lastError) {
+                handleExtensionInvalidated(chrome.runtime.lastError);
+                resolve(false);
+                return;
+              }
               resolve(response?.isSaved || false);
+            } catch (e) {
+              handleExtensionInvalidated(e);
+              resolve(false);
             }
           }
         );
-      });
-    } catch (error) {
-      console.error('检查推文保存状态时出错:', error);
-      return false;
-    }
+      } catch (e) {
+        handleExtensionInvalidated(e);
+        resolve(false);
+      }
+    });
   }
 
   // 通过 background script 保存推文
   async function saveTweet(tweetInfo) {
-    try {
-      return new Promise((resolve) => {
+    return new Promise((resolve) => {
+      try {
         chrome.runtime.sendMessage(
           { action: 'saveTweet', tweetInfo },
           (response) => {
-            if (chrome.runtime.lastError) {
-              console.error('保存推文时出错:', chrome.runtime.lastError);
-              resolve(false);
-            } else {
+            try {
+              if (chrome.runtime.lastError) {
+                handleExtensionInvalidated(chrome.runtime.lastError);
+                resolve(false);
+                return;
+              }
               const success = response?.success || false;
               if (success) {
                 console.log('[X推文追踪器] 推文已保存:', tweetInfo.id);
-                // 发送通知消息
-                chrome.runtime.sendMessage({
-                  action: 'tweetSaved',
-                  tweetId: tweetInfo.id
-                }).catch(() => {});
+                try {
+                  chrome.runtime.sendMessage({
+                    action: 'tweetSaved',
+                    tweetId: tweetInfo.id
+                  }).catch(() => {});
+                } catch (_) {}
               }
               resolve(success);
+            } catch (e) {
+              handleExtensionInvalidated(e);
+              resolve(false);
             }
           }
         );
-      });
-    } catch (error) {
-      console.error('保存推文时出错:', error);
-      return false;
-    }
+      } catch (e) {
+        handleExtensionInvalidated(e);
+        resolve(false);
+      }
+    });
   }
 
   // 通过 background script 删除保存的推文
   async function unsaveTweet(tweetId) {
-    try {
-      return new Promise((resolve) => {
+    return new Promise((resolve) => {
+      try {
         chrome.runtime.sendMessage(
           { action: 'deleteTweet', tweetId },
           (response) => {
-            if (chrome.runtime.lastError) {
-              console.error('删除保存的推文时出错:', chrome.runtime.lastError);
-              resolve(false);
-            } else {
+            try {
+              if (chrome.runtime.lastError) {
+                handleExtensionInvalidated(chrome.runtime.lastError);
+                resolve(false);
+                return;
+              }
               resolve(response?.success || false);
+            } catch (e) {
+              handleExtensionInvalidated(e);
+              resolve(false);
             }
           }
         );
-      });
-    } catch (error) {
-      console.error('删除保存的推文时出错:', error);
-      return false;
-    }
+      } catch (e) {
+        handleExtensionInvalidated(e);
+        resolve(false);
+      }
+    });
   }
 
   // 等待操作栏加载完成
@@ -613,7 +644,15 @@
     async function handleButtonClick(e) {
       e.preventDefault();
       e.stopPropagation();
-      
+      if (e.shiftKey || shiftKeyHeld) {
+        try {
+          await handleAddToThread(tweetElement);
+        } catch (err) {
+          console.error('[X推文追踪器] 加入回复串失败:', err);
+          showNotification('加入回复串失败: ' + (err && err.message ? err.message : '未知错误'));
+        }
+        return;
+      }
       const tweetInfo = extractTweetInfo(tweetElement);
       if (!tweetInfo) {
         alert('无法提取推文信息');
@@ -676,6 +715,102 @@
     }, 2000);
   }
 
+  // 获取全部已保存推文（用于手动回复串落定）
+  function getAllSavedTweets() {
+    return new Promise((resolve) => {
+      try {
+        chrome.runtime.sendMessage({ action: 'getAllTweets' }, (response) => {
+          try {
+            if (chrome.runtime.lastError) {
+              handleExtensionInvalidated(chrome.runtime.lastError);
+              resolve({});
+              return;
+            }
+            resolve(response?.tweets || {});
+          } catch (e) {
+            handleExtensionInvalidated(e);
+            resolve({});
+          }
+        });
+      } catch (e) {
+        handleExtensionInvalidated(e);
+        resolve({});
+      }
+    });
+  }
+
+  // 手动回复串：落定（按时间排序，赋 threadRootId / replyToId / type）
+  async function finalizeThread() {
+    threadFinalizeTimer = null;
+    if (threadBuffer.length < 2) {
+      threadBuffer = [];
+      return;
+    }
+    const tweets = await getAllSavedTweets();
+    const sorted = threadBuffer
+      .map((item) => tweets[item.id])
+      .filter(Boolean)
+      .sort((a, b) => new Date(a.date || a.savedAt || 0) - new Date(b.date || b.savedAt || 0));
+    if (sorted.length < 2) {
+      threadBuffer = [];
+      return;
+    }
+    const rootId = sorted[0].id;
+    for (let i = 0; i < sorted.length; i++) {
+      const t = sorted[i];
+      const merged = { ...t };
+      merged.threadRootId = rootId;
+      if (i === 0) {
+        merged.type = merged.type || 'tweet';
+        delete merged.replyToId;
+      } else {
+        merged.replyToId = sorted[i - 1].id;
+        merged.type = 'reply';
+      }
+      await saveTweet(merged);
+    }
+    const n = sorted.length;
+    threadBuffer = [];
+    showNotification('已形成回复串，共 ' + n + ' 条');
+    if (typeof forceRefreshButtons === 'function') {
+      forceRefreshButtons();
+    }
+  }
+
+  // 手动回复串：Shift+点击时加入当前推文到串
+  async function handleAddToThread(tweetElement) {
+    showNotification('正在加入回复串…');
+    try {
+      const tweetInfo = extractTweetInfo(tweetElement);
+      if (!tweetInfo) {
+        showNotification('无法提取推文信息');
+        return;
+      }
+      if (threadBuffer.some((item) => item.id === tweetInfo.id)) {
+        showNotification('已加入回复串，共 ' + threadBuffer.length + ' 条');
+        if (threadFinalizeTimer) clearTimeout(threadFinalizeTimer);
+        threadFinalizeTimer = setTimeout(finalizeThread, THREAD_FINALIZE_DELAY_MS);
+        return;
+      }
+      const alreadySaved = await isTweetSaved(tweetInfo.id);
+      if (!alreadySaved) {
+        const success = await saveTweet(tweetInfo);
+        if (!success) {
+          showNotification('保存失败，请重试');
+          return;
+        }
+      }
+      const date = tweetInfo.date || tweetInfo.savedAt || new Date().toISOString();
+      threadBuffer.push({ id: tweetInfo.id, date });
+      if (threadFinalizeTimer) clearTimeout(threadFinalizeTimer);
+      threadFinalizeTimer = setTimeout(finalizeThread, THREAD_FINALIZE_DELAY_MS);
+      showNotification('已加入回复串，共 ' + threadBuffer.length + ' 条');
+    } catch (err) {
+      console.error('[X推文追踪器] handleAddToThread:', err);
+      showNotification('加入回复串失败: ' + (err && err.message ? err.message : '未知错误'));
+    }
+  }
+
   // 判断 keydown 是否与当前快捷键配置一致
   function matchesSaveFocusedShortcut(e) {
     const k = saveFocusedShortcut.key;
@@ -712,6 +847,15 @@
     return async function handleToggle(e) {
       e.preventDefault();
       e.stopPropagation();
+      if (e.shiftKey || shiftKeyHeld) {
+        try {
+          await handleAddToThread(tweetElement);
+        } catch (err) {
+          console.error('[X推文追踪器] 加入回复串失败:', err);
+          showNotification('加入回复串失败: ' + (err && err.message ? err.message : '未知错误'));
+        }
+        return;
+      }
       const tweetInfo = extractTweetInfo(tweetElement);
       if (!tweetInfo) return;
       const typeLabel = TYPE_LABELS[tweetInfo.type] || tweetInfo.type || 'Tweet';
@@ -861,6 +1005,8 @@
     loadSaveFocusedShortcut();
     loadUnsaveFocusedShortcut();
     loadRedetectTypeShortcut();
+    document.addEventListener('keydown', (e) => { if (e.key === 'Shift') shiftKeyHeld = true; }, true);
+    document.addEventListener('keyup', (e) => { if (e.key === 'Shift') shiftKeyHeld = false; }, true);
     chrome.storage.onChanged.addListener((changes, areaName) => {
       if (areaName !== 'local') return;
       if (changes[SHORTCUT_STORAGE_KEY]) {

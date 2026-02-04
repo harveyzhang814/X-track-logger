@@ -71,7 +71,8 @@ class TweetStorage {
         }
 
         const tweets = result[this.storageKey] || {};
-        tweets[tweetInfo.id] = tweetInfo;
+        const existing = tweets[tweetInfo.id];
+        tweets[tweetInfo.id] = existing ? { ...existing, ...tweetInfo } : tweetInfo;
 
         // 保存更新后的数据
         chrome.storage.local.set({ [this.storageKey]: tweets }, () => {
