@@ -9,6 +9,20 @@ const DEFAULT_SHORTCUT = { key: 'S', ctrlKey: true, shiftKey: true, altKey: fals
 // 移除焦点已保存记录快捷键
 const UNSAVE_SHORTCUT_STORAGE_KEY = 'xTrackerUnsaveFocusedShortcut';
 const DEFAULT_UNSAVE_SHORTCUT = { key: 'D', ctrlKey: true, shiftKey: true, altKey: false, metaKey: false };
+// 重新判断焦点推文类型快捷键
+const REDETECT_TYPE_STORAGE_KEY = 'xTrackerRedetectTypeShortcut';
+const DEFAULT_REDETECT_SHORTCUT = { key: 'T', ctrlKey: true, shiftKey: true, altKey: false, metaKey: false };
+
+function shortcutsEqual(a, b) {
+  if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
+  const keyA = (a.key || '').toLowerCase();
+  const keyB = (b.key || '').toLowerCase();
+  return keyA === keyB &&
+    !!a.ctrlKey === !!b.ctrlKey &&
+    !!a.shiftKey === !!b.shiftKey &&
+    !!a.altKey === !!b.altKey &&
+    !!a.metaKey === !!b.metaKey;
+}
 
 function shortcutToDisplayString(s) {
   if (!s || typeof s.key !== 'string') return 'Ctrl+Shift+S';
@@ -55,6 +69,24 @@ function updateUnsaveShortcutDisplay(shortcut) {
 
 function saveUnsaveShortcutToStorage(shortcut) {
   chrome.storage.local.set({ [UNSAVE_SHORTCUT_STORAGE_KEY]: shortcut });
+}
+
+function loadRedetectTypeShortcutSetting() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get([REDETECT_TYPE_STORAGE_KEY], (result) => {
+      const s = result[REDETECT_TYPE_STORAGE_KEY];
+      resolve(s && typeof s === 'object' ? { ...DEFAULT_REDETECT_SHORTCUT, ...s } : { ...DEFAULT_REDETECT_SHORTCUT });
+    });
+  });
+}
+
+function updateRedetectTypeShortcutDisplay(shortcut) {
+  const el = document.getElementById('shortcutDisplayRedetect');
+  if (el) el.textContent = '当前：' + shortcutToDisplayString(shortcut);
+}
+
+function saveRedetectTypeShortcutToStorage(shortcut) {
+  chrome.storage.local.set({ [REDETECT_TYPE_STORAGE_KEY]: shortcut });
 }
 
 // 更新存储状态显示
@@ -246,10 +278,10 @@ function createTweetHTML(tweet) {
   });
   
   const typeLabels = {
-    tweet: '推文',
-    reply: '回复',
-    repost: '转推',
-    quote: '引用'
+    tweet: 'Tweet',
+    reply: 'Reply',
+    repost: 'Repost',
+    quote: 'Quote'
   };
   
   return `
@@ -472,6 +504,7 @@ settingsBtn.addEventListener('click', () => {
     settingsPanel.classList.add('panel-active');
     loadShortcutSetting().then(updateShortcutDisplay);
     loadUnsaveShortcutSetting().then(updateUnsaveShortcutDisplay);
+    loadRedetectTypeShortcutSetting().then(updateRedetectTypeShortcutDisplay);
   }
 });
 
@@ -567,12 +600,75 @@ resetShortcutBtnUnsave.addEventListener('click', () => {
   showToast('已恢复默认快捷键');
 });
 
+const shortcutDisplayRedetect = document.getElementById('shortcutDisplayRedetect');
+const recordShortcutBtnRedetect = document.getElementById('recordShortcutBtnRedetect');
+const resetShortcutBtnRedetect = document.getElementById('resetShortcutBtnRedetect');
+const shortcutInputRedetect = document.getElementById('shortcutInputRedetect');
+
+let recordingKeydownRedetect = null;
+function stopRecordingRedetect() {
+  if (recordingKeydownRedetect) {
+    shortcutInputRedetect.removeEventListener('keydown', recordingKeydownRedetect);
+    recordingKeydownRedetect = null;
+  }
+  if (recordShortcutBtnRedetect) recordShortcutBtnRedetect.classList.remove('recording');
+  if (shortcutInputRedetect) {
+    shortcutInputRedetect.placeholder = '点击「录制快捷键」后在此按下组合键';
+    shortcutInputRedetect.blur();
+  }
+}
+if (recordShortcutBtnRedetect) {
+  recordShortcutBtnRedetect.addEventListener('click', () => {
+    stopRecordingRedetect();
+    if (shortcutInputRedetect) shortcutInputRedetect.value = '';
+    if (shortcutInputRedetect) shortcutInputRedetect.placeholder = '请按下组合键...';
+    recordShortcutBtnRedetect.classList.add('recording');
+    shortcutInputRedetect.focus();
+    recordingKeydownRedetect = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const key = e.key;
+      if (key === 'Control' || key === 'Alt' || key === 'Shift' || key === 'Meta') return;
+      const shortcut = {
+        key: key.length === 1 ? key.toUpperCase() : key,
+        ctrlKey: !!e.ctrlKey,
+        shiftKey: !!e.shiftKey,
+        altKey: !!e.altKey,
+        metaKey: !!e.metaKey
+      };
+      Promise.all([loadShortcutSetting(), loadUnsaveShortcutSetting()]).then(([saveS, unsaveS]) => {
+        if (shortcutsEqual(shortcut, saveS) || shortcutsEqual(shortcut, unsaveS)) {
+          showToast('与保存/移除快捷键冲突，请换用其他组合');
+          stopRecordingRedetect();
+          return;
+        }
+        saveRedetectTypeShortcutToStorage(shortcut);
+        updateRedetectTypeShortcutDisplay(shortcut);
+        if (shortcutInputRedetect) shortcutInputRedetect.value = shortcutToDisplayString(shortcut);
+        stopRecordingRedetect();
+      });
+    };
+    shortcutInputRedetect.addEventListener('keydown', recordingKeydownRedetect);
+  });
+}
+if (resetShortcutBtnRedetect) {
+  resetShortcutBtnRedetect.addEventListener('click', () => {
+    saveRedetectTypeShortcutToStorage(DEFAULT_REDETECT_SHORTCUT);
+    updateRedetectTypeShortcutDisplay(DEFAULT_REDETECT_SHORTCUT);
+    if (shortcutInputRedetect) shortcutInputRedetect.value = '';
+    showToast('已恢复默认快捷键');
+  });
+}
+
 // 初始化设置页的快捷键显示（若当前在设置页会由切换时加载）
 loadShortcutSetting().then((s) => {
   if (shortcutDisplay) shortcutDisplay.textContent = '当前：' + shortcutToDisplayString(s);
 });
 loadUnsaveShortcutSetting().then((s) => {
   if (shortcutDisplayUnsave) shortcutDisplayUnsave.textContent = '当前：' + shortcutToDisplayString(s);
+});
+loadRedetectTypeShortcutSetting().then((s) => {
+  if (shortcutDisplayRedetect) shortcutDisplayRedetect.textContent = '当前：' + shortcutToDisplayString(s);
 });
 
 // 监听存储变化（通过轮询检查，因为IndexedDB没有change事件）

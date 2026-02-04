@@ -38,11 +38,11 @@
     <div class="stats">
       <span id="tweetCount">0 条推文</span>
       <select id="filterType">
-        <option value="all">全部类型</option>
-        <option value="tweet">推文</option>
-        <option value="reply">回复</option>
-        <option value="repost">转推</option>
-        <option value="quote">引用</option>
+        <option value="all">All</option>
+        <option value="tweet">Tweet</option>
+        <option value="reply">Reply</option>
+        <option value="repost">Repost</option>
+        <option value="quote">Quote</option>
       </select>
     </div>
     
@@ -83,6 +83,15 @@
           <button id="resetShortcutBtnUnsave" type="button" class="reset-shortcut-btn">恢复默认</button>
         </div>
         <input type="text" id="shortcutInputUnsave" class="shortcut-input" readonly placeholder="点击「录制快捷键」后在此按下组合键" autocomplete="off" />
+      </div>
+      <div class="settings-section">
+        <label class="settings-label">重新判断焦点推文类型快捷键</label>
+        <div class="shortcut-row">
+          <span id="shortcutDisplayRedetect" class="shortcut-display">当前：Ctrl+Shift+T</span>
+          <button id="recordShortcutBtnRedetect" type="button" class="record-shortcut-btn">录制快捷键</button>
+          <button id="resetShortcutBtnRedetect" type="button" class="reset-shortcut-btn">恢复默认</button>
+        </div>
+        <input type="text" id="shortcutInputRedetect" class="shortcut-input" readonly placeholder="点击「录制快捷键」后在此按下组合键" autocomplete="off" />
       </div>
     </div>
   </div>

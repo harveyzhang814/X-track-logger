@@ -51,6 +51,15 @@
   flex-shrink: 0;
 }
 
+/* 按钮上的类型文案（推文/回复/转推/引用） */
+.x-tracker-save-btn .x-tracker-btn-type,
+.x-tracker-saved-btn .x-tracker-btn-type {
+  margin-left: 4px;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
 /* 通知样式 */
 .x-tracker-notification {
   position: fixed;

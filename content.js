@@ -30,6 +30,14 @@
   const DEFAULT_UNSAVE_SHORTCUT = { key: 'D', ctrlKey: true, shiftKey: true, altKey: false, metaKey: false };
   let unsaveFocusedShortcut = { ...DEFAULT_UNSAVE_SHORTCUT };
 
+  // 重新判断焦点推文类型快捷键配置
+  const REDETECT_TYPE_STORAGE_KEY = 'xTrackerRedetectTypeShortcut';
+  const DEFAULT_REDETECT_SHORTCUT = { key: 'T', ctrlKey: true, shiftKey: true, altKey: false, metaKey: false };
+  let redetectTypeShortcut = { ...DEFAULT_REDETECT_SHORTCUT };
+
+  // 类型识别与按钮逻辑见 docs/逻辑说明.md
+  const DEBUG_TYPE_DETECTION = false; // 设为 true 时在控制台输出判定信号，便于排查
+
   // 提取推文信息的函数
   function extractTweetInfo(tweetElement) {
     try {
@@ -52,51 +60,59 @@
       const tweetLink = linkElement ? linkElement.href : '';
       const tweetId = tweetLink.match(/\/status\/(\d+)/)?.[1] || '';
 
-      // 判断推文类型
+      // 类型判定：顺序 1.Quote 2.Repost 3.Reply 4.Tweet（见 docs/逻辑说明.md）
       let tweetType = 'tweet';
       let quotedTweet = null;
-      
-      // 1. 优先检查是否是quote推文（引用推文）
-      // quote推文通常有一个包含被引用推文的卡片
+      const signals = {}; // 用于可选调试输出
+
+      // --- 步骤 1：Quote（引用推文 / 转评）---
+      // 主判据：data-testid="quoteTweet"；备选1：当前 article 内的嵌套 article；备选2：同条内存在第二组 User-Name + tweetText（引用卡片）
+      const socialContext = tweetElement.querySelector('[data-testid="socialContext"]');
+      const socialContextText = socialContext ? (socialContext.innerText || socialContext.textContent || '') : '';
+      const isRepostContext = /转推|Reposted|转推了|reposted|Retweeted/i.test(socialContextText);
+      signals.socialContextRepost = !!socialContext && isRepostContext;
+
       let quoteElement = tweetElement.querySelector('[data-testid="quoteTweet"]');
-      
-      // 如果没找到，尝试查找嵌套的推文结构（quote推文通常包含另一个article）
-      if (!quoteElement) {
+      if (!quoteElement && !isRepostContext) {
+        // 备选1：嵌套的 article（内嵌推文块，用 contains 判断在当前推文内即可）
         const nestedArticles = tweetElement.querySelectorAll('article[data-testid="tweet"]');
         for (const nestedArticle of nestedArticles) {
-          // 确保不是当前推文本身
-          if (nestedArticle !== tweetElement && nestedArticle.closest('article') === tweetElement) {
+          if (nestedArticle !== tweetElement && tweetElement.contains(nestedArticle)) {
             quoteElement = nestedArticle;
             break;
           }
         }
       }
-      
+      if (!quoteElement && !isRepostContext) {
+        // 备选2：同一条推文内存在第二组「作者 + 正文」（引用卡片常见结构，X 可能不用 quoteTweet 或嵌套 article）
+        const allTweetTexts = tweetElement.querySelectorAll('[data-testid="tweetText"]');
+        if (allTweetTexts.length >= 2) {
+          const secondTweetText = allTweetTexts[1];
+          const container = secondTweetText.closest('div[role="link"]') || secondTweetText.closest('article') || secondTweetText.parentElement;
+          if (container && tweetElement.contains(container) && container !== tweetElement) {
+            quoteElement = container;
+          }
+        }
+      }
+      signals.quoteTweet = !!quoteElement;
+
       if (quoteElement) {
         tweetType = 'quote';
-        // 提取被引用的推文信息
         const quotedTextElement = quoteElement.querySelector('[data-testid="tweetText"]');
         const quotedAuthorElement = quoteElement.querySelector('[data-testid="User-Name"]');
-        
-        // 尝试多种方式获取被引用推文的链接
         let quotedLink = '';
         let quotedLinkElement = null;
-        
-        // 方法1: 直接在quoteElement中查找包含/status/的链接
         const allLinks = quoteElement.querySelectorAll('a[href*="/status/"]');
         for (const link of allLinks) {
           const href = link.getAttribute('href') || link.href || '';
           if (href && href.includes('/status/')) {
             const linkId = href.match(/\/status\/(\d+)/)?.[1];
-            // 排除当前推文的链接
             if (linkId && linkId !== tweetId) {
               quotedLinkElement = link;
               break;
             }
           }
         }
-        
-        // 方法2: 如果没找到，查找quoteElement的父容器中的链接
         if (!quotedLinkElement) {
           const quoteContainer = quoteElement.closest('div[role="link"]') || quoteElement.parentElement;
           if (quoteContainer) {
@@ -111,15 +127,12 @@
             }
           }
         }
-        
-        // 处理找到的链接
         if (quotedLinkElement) {
           quotedLink = quotedLinkElement.href || quotedLinkElement.getAttribute('href') || '';
           if (quotedLink && !quotedLink.startsWith('http')) {
             quotedLink = quotedLink.startsWith('/') ? `https://x.com${quotedLink}` : `https://x.com/${quotedLink}`;
           }
         }
-        
         quotedTweet = {
           text: quotedTextElement ? quotedTextElement.innerText : '',
           author: {
@@ -129,50 +142,65 @@
           link: quotedLink
         };
       }
-      // 2. 检查是否是repost（转推）
-      else {
-        const socialContext = tweetElement.querySelector('[data-testid="socialContext"]');
-        if (socialContext) {
-          const contextText = socialContext.innerText || socialContext.textContent || '';
-          if (contextText.includes('转推') || contextText.includes('Reposted') || 
-              contextText.includes('转推了') || contextText.includes('reposted') ||
-              contextText.includes('Retweeted')) {
-            tweetType = 'repost';
-          }
+
+      // --- 步骤 2：Repost（转推）---
+      if (tweetType === 'tweet' && signals.socialContextRepost) {
+        tweetType = 'repost';
+      }
+
+      // --- 步骤 3：Reply（回复）---
+      if (tweetType === 'tweet') {
+        let replyIndicator = false;
+        // 只匹配「回复给 @xxx」/「Replying to」等回复语境，不匹配操作栏的「回复」/「Reply」按钮（每条都有）
+        const cardText = (tweetElement.innerText || tweetElement.textContent || '').trim();
+        if (/Replying\s+to|回复给/i.test(cardText)) {
+          replyIndicator = true;
         }
-        
-        // 3. 检查是否是回复
-        if (tweetType === 'tweet') {
-          // 方法1: 检查是否有"回复给"的提示
-          const replyIndicators = tweetElement.querySelectorAll('span[dir="ltr"], span');
+        if (!replyIndicator) {
+          const replyIndicators = tweetElement.querySelectorAll('span[dir="ltr"], span, a, div');
           for (const indicator of replyIndicators) {
-            const indicatorText = indicator.textContent || '';
-            if (indicatorText.includes('回复') || indicatorText.includes('Replying to') ||
-                indicatorText.includes('回复给')) {
-              tweetType = 'reply';
+            const indicatorText = (indicator.textContent || '').trim();
+            if (indicatorText === 'Replying to' || indicatorText.includes('Replying to') || indicatorText.includes('回复给')) {
+              replyIndicator = true;
               break;
             }
           }
-          
-          // 方法2: 检查推文文本是否以@开头（回复通常以@用户名开头）
-          if (tweetType === 'tweet' && text.trim()) {
-            const trimmedText = text.trim();
-            if (trimmedText.startsWith('@')) {
-              const replyPattern = /^@\w+\s+/;
-              if (replyPattern.test(trimmedText)) {
-                tweetType = 'reply';
-              }
-            }
-          }
-          
-          // 方法3: 检查推文链接格式（回复的链接可能包含父推文ID）
-          if (tweetType === 'tweet' && tweetLink) {
-            const statusMatches = tweetLink.match(/\/status\/(\d+)/g);
-            if (statusMatches && statusMatches.length > 1) {
-              tweetType = 'reply';
-            }
-          }
         }
+        signals.replyIndicator = replyIndicator;
+        const statusMatches = tweetLink ? tweetLink.match(/\/status\/(\d+)/g) : null;
+        signals.linkStatusCount = statusMatches ? statusMatches.length : 0;
+        const trimmedText = text.trim();
+        const textStartsWithAt = trimmedText && /^@\w+\s+/.test(trimmedText);
+        signals.textStartsWithAt = textStartsWithAt;
+
+        // 结构判断：仅当容器内为 2～4 条顶层推文且当前非首条时视为串推/对话（避免把整页时间线当一串）
+        let isReplyByStructure = false;
+        let el = tweetElement.parentElement;
+        let depth = 0;
+        const maxDepth = 25;
+        while (el && depth < maxDepth) {
+          const allArticles = el.querySelectorAll('article[data-testid="tweet"]');
+          const rootArticles = Array.from(allArticles).filter(function(a) {
+            return !Array.from(allArticles).some(function(b) { return b !== a && b.contains(a); });
+          });
+          if (rootArticles.length >= 2 && rootArticles.length <= 4) {
+            if (rootArticles[0] !== tweetElement && rootArticles.indexOf(tweetElement) !== -1) {
+              isReplyByStructure = true;
+            }
+            break;
+          }
+          el = el.parentElement;
+          depth++;
+        }
+        signals.replyByStructure = isReplyByStructure;
+
+        if (replyIndicator || (signals.linkStatusCount > 1) || textStartsWithAt || isReplyByStructure) {
+          tweetType = 'reply';
+        }
+      }
+
+      if (DEBUG_TYPE_DETECTION && tweetId) {
+        console.log('[X推文追踪器] type=', tweetType, ', signals:', JSON.stringify(signals));
       }
 
       // 获取转推的原始作者（如果是repost）
@@ -211,8 +239,17 @@
   // 保存图标（磁盘样式）
   const SAVE_ICON_PATH = 'M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm2 16H5V5h11.17L19 7.83V19zm-7-7c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zM6 6h9v4H6z';
 
-  // 创建保存按钮 - 仅磁盘图标，无文字
-  function createSaveButton() {
+  // 推文类型在按钮上的显示文案（英文：Tweet / Reply / Repost / Quote）
+  const TYPE_LABELS = {
+    tweet: 'Tweet',
+    reply: 'Reply',
+    repost: 'Repost',
+    quote: 'Quote'
+  };
+
+  // 创建保存按钮 - 磁盘图标 + 类型文案
+  function createSaveButton(typeLabel) {
+    const label = typeLabel || 'Tweet';
     const button = document.createElement('button');
     button.className = SAVE_BUTTON_CLASS;
     button.type = 'button'; // 防止表单提交
@@ -221,12 +258,14 @@
       <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
         <path d="${SAVE_ICON_PATH}"/>
       </svg>
+      <span class="x-tracker-btn-type">${label}</span>
     `;
     return button;
   }
 
-  // 创建已保存按钮 - 仅磁盘图标，无文字
-  function createSavedButton() {
+  // 创建已保存按钮 - 磁盘图标 + 类型文案
+  function createSavedButton(typeLabel) {
+    const label = typeLabel || 'Tweet';
     const button = document.createElement('button');
     button.className = SAVED_BUTTON_CLASS;
     button.type = 'button'; // 防止表单提交
@@ -235,6 +274,7 @@
       <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
         <path d="${SAVE_ICON_PATH}"/>
       </svg>
+      <span class="x-tracker-btn-type">${label}</span>
     `;
     return button;
   }
@@ -558,13 +598,16 @@
         return;
       }
 
-    // 创建保存按钮容器
+    // 创建保存按钮容器（先取类型文案用于按钮显示）
+    const tweetInfoForType = extractTweetInfo(tweetElement);
+    const typeLabel = TYPE_LABELS[tweetInfoForType?.type] || tweetInfoForType?.type || 'Tweet';
+
     const buttonContainer = document.createElement('div');
     buttonContainer.style.cssText = 'display: flex; align-items: center; margin-left: 12px;';
 
     // 检查是否已保存
     const saved = await isTweetSaved(tweetId);
-    let button = saved ? createSavedButton() : createSaveButton();
+    let button = saved ? createSavedButton(typeLabel) : createSaveButton(typeLabel);
     
     // 添加点击事件处理函数
     async function handleButtonClick(e) {
@@ -583,7 +626,7 @@
         // 取消保存
         const success = await unsaveTweet(tweetId);
         if (success) {
-          const newButton = createSaveButton();
+          const newButton = createSaveButton(typeLabel);
           buttonContainer.replaceChild(newButton, button);
           button = newButton;
           // 重新绑定事件
@@ -593,7 +636,7 @@
         // 保存推文
         const success = await saveTweet(tweetInfo);
         if (success) {
-          const newButton = createSavedButton();
+          const newButton = createSavedButton(typeLabel);
           buttonContainer.replaceChild(newButton, button);
           button = newButton;
           // 重新绑定事件
@@ -654,6 +697,16 @@
       !!e.metaKey === !!unsaveFocusedShortcut.metaKey;
   }
 
+  function matchesRedetectTypeShortcut(e) {
+    const k = redetectTypeShortcut.key;
+    const keyMatch = (e.key && k && (e.key === k || e.key.toUpperCase() === k || e.key.toLowerCase() === k.toLowerCase()));
+    return keyMatch &&
+      !!e.ctrlKey === !!redetectTypeShortcut.ctrlKey &&
+      !!e.shiftKey === !!redetectTypeShortcut.shiftKey &&
+      !!e.altKey === !!redetectTypeShortcut.altKey &&
+      !!e.metaKey === !!redetectTypeShortcut.metaKey;
+  }
+
   // 为推文上的保存/已保存按钮创建统一的点击处理（供快捷键保存后绑定用）
   function createTweetButtonClickHandler(tweetElement) {
     return async function handleToggle(e) {
@@ -661,20 +714,21 @@
       e.stopPropagation();
       const tweetInfo = extractTweetInfo(tweetElement);
       if (!tweetInfo) return;
+      const typeLabel = TYPE_LABELS[tweetInfo.type] || tweetInfo.type || 'Tweet';
       const isSaved = await isTweetSaved(tweetInfo.id);
       const container = e.currentTarget.parentElement;
       const currentBtn = e.currentTarget;
       if (isSaved) {
         const success = await unsaveTweet(tweetInfo.id);
         if (success) {
-          const newBtn = createSaveButton();
+          const newBtn = createSaveButton(typeLabel);
           container.replaceChild(newBtn, currentBtn);
           newBtn.addEventListener('click', createTweetButtonClickHandler(tweetElement));
         }
       } else {
         const success = await saveTweet(tweetInfo);
         if (success) {
-          const newBtn = createSavedButton();
+          const newBtn = createSavedButton(typeLabel);
           container.replaceChild(newBtn, currentBtn);
           newBtn.addEventListener('click', createTweetButtonClickHandler(tweetElement));
           showNotification('推文已保存！');
@@ -709,7 +763,8 @@
     const saveBtn = currentFocusTweet.querySelector(`.${SAVE_BUTTON_CLASS}`);
     if (saveBtn) {
       const buttonContainer = saveBtn.parentElement;
-      const newBtn = createSavedButton();
+      const typeLabel = TYPE_LABELS[tweetInfo.type] || tweetInfo.type || 'Tweet';
+      const newBtn = createSavedButton(typeLabel);
       buttonContainer.replaceChild(newBtn, saveBtn);
       newBtn.addEventListener('click', createTweetButtonClickHandler(currentFocusTweet));
     }
@@ -740,12 +795,40 @@
       return;
     }
     const buttonContainer = savedBtn.parentElement;
-    const newBtn = createSaveButton();
+    const typeLabel = TYPE_LABELS[tweetInfo.type] || tweetInfo.type || 'Tweet';
+    const newBtn = createSaveButton(typeLabel);
     buttonContainer.replaceChild(newBtn, savedBtn);
     newBtn.addEventListener('click', createTweetButtonClickHandler(currentFocusTweet));
     currentFocusTweet.classList.remove(FOCUS_HIGHLIGHT_SAVED);
     currentFocusTweet.classList.add(FOCUS_HIGHLIGHT_UNSAVED);
     showNotification('已移除保存');
+  }
+
+  // 快捷键：重新判断焦点推文类型
+  async function redetectFocusedTweetType() {
+    if (!currentFocusTweet) {
+      showNotification('请将鼠标移到要重判类型的推文上');
+      return;
+    }
+    const tweetInfo = extractTweetInfo(currentFocusTweet);
+    if (!tweetInfo) {
+      showNotification('无法提取推文信息');
+      return;
+    }
+    const typeLabel = TYPE_LABELS[tweetInfo.type] || tweetInfo.type || 'Tweet';
+    const existingBtn = currentFocusTweet.querySelector(`.${SAVE_BUTTON_CLASS}, .${SAVED_BUTTON_CLASS}`);
+    if (existingBtn) {
+      const container = existingBtn.parentElement;
+      const isSaved = existingBtn.classList.contains(SAVED_BUTTON_CLASS);
+      const newBtn = isSaved ? createSavedButton(typeLabel) : createSaveButton(typeLabel);
+      container.replaceChild(newBtn, existingBtn);
+      newBtn.addEventListener('click', createTweetButtonClickHandler(currentFocusTweet));
+    }
+    const saved = await isTweetSaved(tweetInfo.id);
+    if (saved) {
+      await saveTweet(tweetInfo);
+    }
+    showNotification('类型已更新为 ' + typeLabel);
   }
 
   // 加载快捷键配置并监听 storage 变化
@@ -765,10 +848,19 @@
     });
   }
 
-  // 注册快捷键监听与 storage 监听（先判断移除再判断保存，避免同组合时重复执行）
+  function loadRedetectTypeShortcut() {
+    chrome.storage.local.get([REDETECT_TYPE_STORAGE_KEY], (result) => {
+      if (result[REDETECT_TYPE_STORAGE_KEY] && typeof result[REDETECT_TYPE_STORAGE_KEY] === 'object') {
+        redetectTypeShortcut = { ...DEFAULT_REDETECT_SHORTCUT, ...result[REDETECT_TYPE_STORAGE_KEY] };
+      }
+    });
+  }
+
+  // 注册快捷键监听与 storage 监听（冲突时提示，否则按优先级：重判类型 > 移除 > 保存）
   function setupSaveFocusedShortcut() {
     loadSaveFocusedShortcut();
     loadUnsaveFocusedShortcut();
+    loadRedetectTypeShortcut();
     chrome.storage.onChanged.addListener((changes, areaName) => {
       if (areaName !== 'local') return;
       if (changes[SHORTCUT_STORAGE_KEY]) {
@@ -783,21 +875,27 @@
           unsaveFocusedShortcut = { ...DEFAULT_UNSAVE_SHORTCUT, ...next };
         }
       }
+      if (changes[REDETECT_TYPE_STORAGE_KEY]) {
+        const next = changes[REDETECT_TYPE_STORAGE_KEY].newValue;
+        if (next && typeof next === 'object') {
+          redetectTypeShortcut = { ...DEFAULT_REDETECT_SHORTCUT, ...next };
+        }
+      }
     });
     document.addEventListener('keydown', (e) => {
       const matchSave = matchesSaveFocusedShortcut(e);
       const matchUnsave = matchesUnsaveFocusedShortcut(e);
-      if (!matchSave && !matchUnsave) return;
+      const matchRedetect = matchesRedetectTypeShortcut(e);
+      if (!matchSave && !matchUnsave && !matchRedetect) return;
       e.preventDefault();
       e.stopPropagation();
-      // 快捷键相同时根据焦点推文状态决定执行保存还是移除，避免固定顺序导致其中一个被阻拦
-      if (matchSave && matchUnsave) {
-        const isSaved = currentFocusTweet && currentFocusTweet.querySelector(`.${SAVED_BUTTON_CLASS}`);
-        if (isSaved) {
-          unsaveFocusedTweetOnShortcut();
-        } else {
-          saveFocusedTweetOnShortcut();
-        }
+      const matchCount = (matchSave ? 1 : 0) + (matchUnsave ? 1 : 0) + (matchRedetect ? 1 : 0);
+      if (matchCount >= 2) {
+        showNotification('快捷键冲突，请在设置中修改');
+        return;
+      }
+      if (matchRedetect) {
+        redetectFocusedTweetType();
       } else if (matchUnsave) {
         unsaveFocusedTweetOnShortcut();
       } else {
