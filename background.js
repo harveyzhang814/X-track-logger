@@ -1,4 +1,4 @@
-// X推文追踪器 - Background Service Worker
+// FigClip - Background Service Worker
 
 // 导入存储模块（在 background 中直接使用 IndexedDB）
 importScripts('storage.js');
@@ -46,12 +46,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           break;
           
         case 'tweetSaved':
-          console.log('推文已保存:', request.tweetId);
+          console.log('片段已保存:', request.tweetId);
           sendResponse({ success: true });
           break;
           
         case 'refreshButtons':
-          // 向所有X/Twitter标签页发送刷新请求
+          // 向所有已匹配标签页发送刷新请求
           chrome.tabs.query({ url: ['https://twitter.com/*', 'https://x.com/*'] }, (tabs) => {
             tabs.forEach(tab => {
               chrome.tabs.sendMessage(tab.id, { action: 'refreshButtons' }).catch(() => {
@@ -66,7 +66,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           sendResponse({ error: 'Unknown action' });
       }
     } catch (error) {
-      console.error('[X推文追踪器] Background 处理消息时出错:', error);
+      console.error('[FigClip] Background 处理消息时出错:', error);
       sendResponse({ error: error.message });
     }
   })();
@@ -76,13 +76,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // 监听扩展安装
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('X推文追踪器已安装');
+  console.log('FigClip 已安装');
   
   // 初始化 Chrome Storage
   tweetStorage.init().then(() => {
-    console.log('[X推文追踪器] Background Chrome Storage 初始化成功');
+    console.log('[FigClip] Background Chrome Storage 初始化成功');
   }).catch(error => {
-    console.error('[X推文追踪器] Background Chrome Storage 初始化失败:', error);
+    console.error('[FigClip] Background Chrome Storage 初始化失败:', error);
   });
 });
 
