@@ -6,7 +6,7 @@ set -e
 cd "$(dirname "$0")"
 
 VERSION=$(grep '"version"' manifest.json | cut -d'"' -f4)
-echo "构建 X推文追踪器 v${VERSION}（Load unpacked 用）..."
+echo "构建 FigClip v${VERSION}（Load unpacked 用）..."
 
 rm -rf dist
 mkdir -p dist
@@ -29,6 +29,13 @@ fi
 if [ -d libs ]; then
   echo "复制 libs/ ..."
   cp -r libs dist/
+fi
+
+if [ -d _locales ]; then
+  echo "复制 _locales/ ..."
+  cp -r _locales dist/
+else
+  echo "⚠️  未找到 _locales/，多语言功能将不可用"
 fi
 
 echo ""
