@@ -48,16 +48,22 @@
 1. **克隆仓库**
    ```bash
    git clone https://github.com/harveyzhang814/X-track-logger.git
-   cd X_tracker
+   cd X-track-logger
    ```
 
-2. **加载扩展**
+2. **构建（用于「加载已解压的扩展程序」）**
+   ```bash
+   ./build-unpacked.sh
+   ```
+   会生成 `dist/` 目录，仅包含扩展所需文件，适合直接加载。
+
+3. **加载扩展**
    - 打开Chrome浏览器，访问 `chrome://extensions/`
    - 开启右上角的"开发者模式"
    - 点击"加载已解压的扩展程序"
-   - 选择项目文件夹
+   - 选择项目的 **`dist`** 目录（若未构建则选项目根目录）
 
-3. **开始使用**
+4. **开始使用**
    - 访问 [X.com](https://x.com) 或 [Twitter.com](https://twitter.com)
    - 在推文旁边找到蓝色的"保存"按钮
    - 点击即可保存推文
