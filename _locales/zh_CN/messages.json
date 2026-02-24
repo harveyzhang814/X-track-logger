@@ -40,7 +40,7 @@
     "message": "还没有保存任何片段"
   },
   "popup_empty_hint": {
-    "message": "在网页上点击内容旁的"保存"按钮即可保存"
+    "message": "在网页上点击内容旁的\"保存\"按钮即可保存"
   },
   "popup_unknown": {
     "message": "未知"
