@@ -32,15 +32,15 @@
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icons/tagged_bookmark 16px.png",
-      "48": "icons/tagged_bookmark 48px.png",
-      "128": "icons/tagged_bookmark 128px.png"
+      "16": "icons/figclip_icon 16px.png",
+      "48": "icons/figclip_icon 48px.png",
+      "128": "icons/figclip_icon 128px.png"
     }
   },
   "icons": {
-    "16": "icons/tagged_bookmark 16px.png",
-    "48": "icons/tagged_bookmark 48px.png",
-    "128": "icons/tagged_bookmark 128px.png"
+    "16": "icons/figclip_icon 16px.png",
+    "48": "icons/figclip_icon 48px.png",
+    "128": "icons/figclip_icon 128px.png"
   }
 }
 
