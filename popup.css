@@ -1,4 +1,30 @@
-/* FigClip - Popup样式 */
+/* FigClip - Popup 样式 | Minimalism + Trust & Authority | Purple Theme */
+
+:root {
+  --color-bg:          #0D0D12;
+  --color-surface:     #13131A;
+  --color-surface-2:   #1A1A24;
+  --color-border:      rgba(107, 33, 168, 0.18);
+  --color-border-sub:  rgba(255, 255, 255, 0.06);
+  --color-primary:     #7C3AED;
+  --color-primary-dim: rgba(124, 58, 237, 0.12);
+  --color-primary-hover: #6D28D9;
+  --color-accent:      #A78BFA;
+  --color-text:        #F1F0F5;
+  --color-text-muted:  #8B8A9A;
+  --color-text-sub:    #5A5870;
+  --color-success:     #10B981;
+  --color-success-dim: rgba(16, 185, 129, 0.12);
+  --color-error:       #EF4444;
+  --color-tweet:       #7C3AED;
+  --color-reply:       #10B981;
+  --color-repost:      #10B981;
+  --color-quote:       #F59E0B;
+  --radius-sm:         4px;
+  --radius-md:         8px;
+  --radius-lg:         12px;
+  --transition:        all 0.18s ease;
+}
 
 * {
   margin: 0;
@@ -10,8 +36,10 @@ body {
   width: 500px;
   max-height: 600px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #000;
-  color: #fff;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
 }
 
 .container {
@@ -20,18 +48,20 @@ body {
   height: 100%;
 }
 
+/* ─── Header ─── */
 header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
-  border-bottom: 1px solid rgb(47, 51, 54);
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-surface);
 }
 
 .header-title {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
 }
 
 .header-icon {
@@ -41,272 +71,129 @@ header {
 }
 
 header h1 {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--color-text);
 }
 
 .header-actions {
   display: flex;
-  gap: 4px;
+  gap: 2px;
 }
 
 .icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-md);
   background-color: transparent;
-  color: rgb(113, 118, 123);
+  color: var(--color-text-muted);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
 }
 
 .icon-btn:hover {
-  background-color: rgba(113, 118, 123, 0.1);
-  color: #fff;
+  background-color: var(--color-primary-dim);
+  color: var(--color-accent);
 }
 
+.icon-btn:active {
+  transform: scale(0.93);
+}
+
+/* ─── Stats bar ─── */
 .stats {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid rgb(47, 51, 54);
-  font-size: 14px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--color-border-sub);
+  font-size: 13px;
+  color: var(--color-text-muted);
 }
 
+#tweetCount {
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+#filterType {
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  transition: var(--transition);
+}
+
+#filterType:hover,
+#filterType:focus {
+  border-color: var(--color-primary);
+}
+
+/* ─── Storage status ─── */
 .storage-status {
-  padding: 8px 16px;
-  border-bottom: 1px solid rgb(47, 51, 54);
-  background-color: rgba(255, 255, 255, 0.02);
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--color-border-sub);
 }
 
 .storage-status-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: rgb(113, 118, 123);
+  gap: 7px;
+  font-size: 11px;
+  color: var(--color-text-sub);
+  letter-spacing: 0.01em;
 }
 
 .status-indicator {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background-color: rgb(113, 118, 123);
+  background-color: var(--color-text-sub);
   flex-shrink: 0;
   animation: pulse 2s infinite;
 }
 
 .status-indicator.ready {
-  background-color: rgb(0, 186, 124);
+  background-color: var(--color-success);
   animation: none;
 }
 
 .status-indicator.error {
-  background-color: rgb(244, 33, 46);
+  background-color: var(--color-error);
   animation: none;
 }
 
 .status-indicator.loading {
-  background-color: rgb(29, 155, 240);
+  background-color: var(--color-primary);
 }
 
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
 }
 
 #statusText {
   flex: 1;
 }
 
-#filterType {
-  padding: 4px 8px;
-  border: 1px solid rgb(47, 51, 54);
-  border-radius: 4px;
-  background-color: #000;
-  color: #fff;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-#filterType:hover {
-  border-color: rgb(113, 118, 123);
-}
-
+/* ─── Tweet list ─── */
 .tweets-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: 4px 0;
 }
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 24px;
-  text-align: center;
-  color: rgb(113, 118, 123);
-}
-
-.empty-state p {
-  margin-top: 16px;
-  font-size: 15px;
-}
-
-.empty-state .hint {
-  margin-top: 8px;
-  font-size: 13px;
-  opacity: 0.7;
-}
-
-.tweet-item {
-  padding: 12px;
-  border-bottom: 1px solid rgb(47, 51, 54);
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.tweet-item:hover {
-  background-color: rgba(255, 255, 255, 0.03);
-}
-
-.tweet-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.tweet-author {
-  font-weight: 700;
-  font-size: 15px;
-  color: #fff;
-}
-
-.tweet-handle {
-  color: rgb(113, 118, 123);
-  font-size: 15px;
-  margin-left: 4px;
-}
-
-.tweet-type {
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.tweet-type.tweet {
-  background-color: rgba(29, 155, 240, 0.2);
-  color: rgb(29, 155, 240);
-}
-
-.tweet-type.reply {
-  background-color: rgba(0, 186, 124, 0.2);
-  color: rgb(0, 186, 124);
-}
-
-.tweet-type.repost {
-  background-color: rgba(0, 186, 124, 0.2);
-  color: rgb(0, 186, 124);
-}
-
-.tweet-type.quote {
-  background-color: rgba(249, 24, 128, 0.2);
-  color: rgb(249, 24, 128);
-}
-
-.tweet-text {
-  font-size: 15px;
-  line-height: 1.4;
-  color: #fff;
-  margin-bottom: 8px;
-  word-wrap: break-word;
-  white-space: pre-wrap;
-}
-
-.quoted-tweet {
-  margin-top: 12px;
-  padding: 12px;
-  border: 1px solid rgb(47, 51, 54);
-  border-radius: 12px;
-  background-color: rgba(255, 255, 255, 0.03);
-}
-
-.quoted-tweet-header {
-  margin-bottom: 8px;
-  font-size: 13px;
-}
-
-.quoted-tweet-author {
-  font-weight: 700;
-  color: #fff;
-}
-
-.quoted-tweet-handle {
-  color: rgb(113, 118, 123);
-  margin-left: 4px;
-}
-
-.quoted-tweet-text {
-  font-size: 14px;
-  line-height: 1.4;
-  color: rgb(231, 233, 234);
-  word-wrap: break-word;
-  white-space: pre-wrap;
-}
-
-.tweet-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-  color: rgb(113, 118, 123);
-}
-
-.tweet-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.tweet-action-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border: none;
-  border-radius: 4px;
-  background-color: transparent;
-  color: rgb(113, 118, 123);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.tweet-action-btn:hover {
-  background-color: rgba(113, 118, 123, 0.1);
-  color: #fff;
-}
-
-.tweet-action-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-/* 滚动条样式 */
 .tweets-list::-webkit-scrollbar {
-  width: 8px;
+  width: 4px;
 }
 
 .tweets-list::-webkit-scrollbar-track {
@@ -314,15 +201,185 @@ header h1 {
 }
 
 .tweets-list::-webkit-scrollbar-thumb {
-  background: rgb(47, 51, 54);
-  border-radius: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
 }
 
 .tweets-list::-webkit-scrollbar-thumb:hover {
-  background: rgb(113, 118, 123);
+  background: var(--color-primary);
 }
 
-/* 主面板 / 设置面板切换 */
+/* ─── Empty state ─── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 52px 24px;
+  text-align: center;
+  color: var(--color-text-sub);
+}
+
+.empty-state svg {
+  opacity: 0.25;
+  color: var(--color-accent);
+}
+
+.empty-state p {
+  margin-top: 14px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.empty-state .hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--color-text-sub);
+}
+
+/* ─── Tweet item ─── */
+.tweet-item {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border-sub);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.tweet-item:hover {
+  background-color: var(--color-primary-dim);
+}
+
+.tweet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 7px;
+}
+
+.tweet-author {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.tweet-handle {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  margin-left: 4px;
+  font-weight: 400;
+}
+
+/* ─── Type badge ─── */
+.tweet-type {
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tweet-type.tweet {
+  background-color: rgba(124, 58, 237, 0.15);
+  color: var(--color-accent);
+}
+
+.tweet-type.reply {
+  background-color: var(--color-success-dim);
+  color: var(--color-success);
+}
+
+.tweet-type.repost {
+  background-color: var(--color-success-dim);
+  color: var(--color-success);
+}
+
+.tweet-type.quote {
+  background-color: rgba(245, 158, 11, 0.12);
+  color: #F59E0B;
+}
+
+/* ─── Tweet content ─── */
+.tweet-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text);
+  margin-bottom: 8px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.quoted-tweet {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-2);
+}
+
+.quoted-tweet-header {
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.quoted-tweet-author {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.quoted-tweet-handle {
+  color: var(--color-text-muted);
+  margin-left: 4px;
+}
+
+.quoted-tweet-text {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+/* ─── Tweet meta & actions ─── */
+.tweet-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--color-text-sub);
+  margin-top: 2px;
+}
+
+.tweet-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.tweet-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.tweet-action-btn:hover {
+  background-color: var(--color-primary-dim);
+  color: var(--color-accent);
+}
+
+.tweet-action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ─── Panel switch ─── */
 .panel {
   display: none;
   flex-direction: column;
@@ -334,82 +391,94 @@ header h1 {
   display: flex;
 }
 
+/* ─── Settings panel ─── */
 #settingsPanel {
-  padding: 16px;
+  padding: 16px 16px 20px;
 }
 
 .settings-title {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid rgb(47, 51, 54);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  letter-spacing: 0.01em;
 }
 
 .settings-section {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .settings-label {
   display: block;
-  font-size: 14px;
-  color: rgb(231, 233, 234);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-muted);
   margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .shortcut-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 8px;
 }
 
 .shortcut-display {
-  font-size: 14px;
-  color: rgb(113, 118, 123);
+  font-size: 13px;
+  color: var(--color-accent);
+  font-weight: 500;
+  min-width: 60px;
 }
 
 .record-shortcut-btn,
 .reset-shortcut-btn {
-  padding: 6px 12px;
-  border: 1px solid rgb(47, 51, 54);
-  border-radius: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   background-color: transparent;
-  color: #fff;
-  font-size: 13px;
+  color: var(--color-text);
+  font-size: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
 }
 
 .record-shortcut-btn:hover,
 .reset-shortcut-btn:hover {
-  background-color: rgba(113, 118, 123, 0.1);
-  border-color: rgb(113, 118, 123);
+  background-color: var(--color-primary-dim);
+  border-color: var(--color-primary);
+  color: var(--color-accent);
 }
 
 .record-shortcut-btn.recording {
-  border-color: rgb(29, 155, 240);
-  color: rgb(29, 155, 240);
+  border-color: var(--color-primary);
+  color: var(--color-accent);
+  background-color: var(--color-primary-dim);
 }
 
 .shortcut-input {
   display: block;
   width: 100%;
-  padding: 8px 12px;
+  padding: 7px 11px;
   margin-top: 4px;
-  border: 1px solid rgb(47, 51, 54);
-  border-radius: 6px;
-  background-color: rgba(255, 255, 255, 0.05);
-  color: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface-2);
+  color: var(--color-text);
   font-size: 13px;
   outline: none;
+  transition: var(--transition);
 }
 
 .shortcut-input:focus {
-  border-color: rgb(113, 118, 123);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
 }
 
 .shortcut-input::placeholder {
-  color: rgb(113, 118, 123);
+  color: var(--color-text-sub);
 }

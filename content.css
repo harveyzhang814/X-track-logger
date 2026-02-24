@@ -1,47 +1,46 @@
-/* FigClip - 样式文件 */
+/* FigClip - Content Script 样式 | Minimalism + Trust & Authority | Purple Theme */
 
+/* ─── 保存 / 已保存按钮（推文行内） ─── */
 .x-tracker-save-btn,
 .x-tracker-saved-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px;
+  padding: 6px 8px;
   border: none;
-  border-radius: 20px;
+  border-radius: 6px;
   background-color: transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.18s ease, color 0.18s ease;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   position: relative;
 }
 
 .x-tracker-save-btn {
-  color: rgb(29, 155, 240);
+  color: #7C3AED;
 }
 
 .x-tracker-save-btn:hover {
-  background-color: rgba(29, 155, 240, 0.15);
-  color: rgb(29, 155, 240);
-  transform: scale(1.05);
+  background-color: rgba(124, 58, 237, 0.12);
+  color: #A78BFA;
 }
 
 .x-tracker-save-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.94);
 }
 
 .x-tracker-saved-btn {
-  color: rgb(0, 186, 124);
-  background-color: rgba(0, 186, 124, 0.1);
+  color: #10B981;
+  background-color: rgba(16, 185, 129, 0.08);
 }
 
 .x-tracker-saved-btn:hover {
-  background-color: rgba(0, 186, 124, 0.2);
-  color: rgb(0, 186, 124);
-  transform: scale(1.05);
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34D399;
 }
 
 .x-tracker-saved-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.94);
 }
 
 .x-tracker-save-btn svg,
@@ -51,7 +50,7 @@
   flex-shrink: 0;
 }
 
-/* 按钮上的类型文案（推文/回复/转推/引用） */
+/* 按钮上的类型文案 */
 .x-tracker-save-btn .x-tracker-btn-type,
 .x-tracker-saved-btn .x-tracker-btn-type {
   margin-left: 4px;
@@ -60,23 +59,26 @@
   white-space: nowrap;
 }
 
-/* 通知样式 */
+/* ─── 通知提示 ─── */
 .x-tracker-notification {
   position: fixed;
   top: 20px;
   right: 20px;
-  background-color: rgb(0, 0, 0);
-  color: rgb(255, 255, 255);
-  padding: 12px 20px;
+  background-color: #13131A;
+  color: #F1F0F5;
+  padding: 10px 16px;
   border-radius: 8px;
-  box-shadow: rgba(255, 255, 255, 0.2) 0px 0px 15px, rgba(255, 255, 255, 0.15) 0px 0px 3px 1px;
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(124, 58, 237, 0.1);
   z-index: 10000;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 400;
   opacity: 0;
-  transform: translateY(-10px);
-  transition: all 0.3s ease;
+  transform: translateY(-8px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  max-width: 280px;
+  line-height: 1.4;
 }
 
 .x-tracker-notification.show {
@@ -84,7 +86,7 @@
   transform: translateY(0);
 }
 
-/* 悬浮窗样式 */
+/* ─── 悬浮按钮 ─── */
 .x-tracker-floating-widget {
   position: fixed;
   top: 20px;
@@ -100,34 +102,35 @@
 
 .x-tracker-floating-btn {
   pointer-events: auto;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: none;
-  background-color: rgb(29, 155, 240);
-  color: rgb(255, 255, 255);
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  background-color: #13131A;
+  color: #A78BFA;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45), 0 1px 4px rgba(124, 58, 237, 0.2);
+  transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.15s ease;
   padding: 0;
 }
 
 .x-tracker-floating-btn:hover {
-  background-color: rgb(26, 140, 216);
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2), 0 3px 6px rgba(0, 0, 0, 0.15);
+  background-color: rgba(124, 58, 237, 0.15);
+  border-color: rgba(124, 58, 237, 0.6);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(124, 58, 237, 0.25);
+  transform: translateY(-1px);
 }
 
 .x-tracker-floating-btn:active {
-  transform: scale(0.95);
+  transform: scale(0.94);
 }
 
 .x-tracker-floating-btn svg {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   fill: currentColor;
 }
 
@@ -136,38 +139,32 @@
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
-/* 焦点推文边框高亮：未保存蓝色，已保存绿色（与保存图标一致） */
+/* ─── 焦点推文高亮边框 ─── */
 .x-tracker-tweet-focus-unsaved {
-  box-shadow: 0 0 0 2px rgba(29, 155, 240, 0.6);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.5);
   transition: box-shadow 0.15s ease;
   border-radius: 16px;
 }
 
 .x-tracker-tweet-focus-saved {
-  box-shadow: 0 0 0 2px rgba(0, 186, 124, 0.6);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
   transition: box-shadow 0.15s ease;
   border-radius: 16px;
 }
 
-/* 深色模式适配 */
+/* ─── 深色模式适配（X 本身已是深色，保持一致） ─── */
 @media (prefers-color-scheme: dark) {
   .x-tracker-floating-btn {
-    background-color: rgb(29, 155, 240);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+    background-color: #13131A;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 1px 4px rgba(124, 58, 237, 0.25);
   }
-  
+
   .x-tracker-floating-btn:hover {
-    background-color: rgb(26, 140, 216);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), 0 3px 6px rgba(0, 0, 0, 0.3);
+    background-color: rgba(124, 58, 237, 0.18);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(124, 58, 237, 0.3);
   }
 }
-
-
