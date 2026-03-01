@@ -1,0 +1,204 @@
+{
+  "app_name": {
+    "message": "FigClip"
+  },
+  "app_description": {
+    "message": "轻量级文本片段嵌入记录工具，一键保存网页内容到本地，完全离线，数据不离开您的浏览器"
+  },
+
+  "popup_refresh_btn_title": {
+    "message": "刷新保存按钮"
+  },
+  "popup_export_btn_title": {
+    "message": "导出数据"
+  },
+  "popup_clear_btn_title": {
+    "message": "清空所有"
+  },
+  "popup_settings_btn_title": {
+    "message": "设置"
+  },
+  "popup_count_suffix": {
+    "message": "条片段"
+  },
+  "popup_status_initializing": {
+    "message": "正在初始化 Chrome Storage..."
+  },
+  "popup_status_ready": {
+    "message": "Chrome Storage 已就绪"
+  },
+  "popup_status_loading": {
+    "message": "正在加载数据..."
+  },
+  "popup_status_error": {
+    "message": "Chrome Storage 错误: $ERROR$",
+    "placeholders": {
+      "error": { "content": "$1" }
+    }
+  },
+  "popup_empty_title": {
+    "message": "还没有保存任何片段"
+  },
+  "popup_empty_hint": {
+    "message": "在网页上点击内容旁的"保存"按钮即可保存"
+  },
+  "popup_unknown": {
+    "message": "未知"
+  },
+
+  "settings_title": {
+    "message": "设置"
+  },
+  "settings_save_shortcut_label": {
+    "message": "保存焦点片段快捷键"
+  },
+  "settings_unsave_shortcut_label": {
+    "message": "移除焦点已保存片段快捷键"
+  },
+  "settings_redetect_shortcut_label": {
+    "message": "重新判断焦点片段类型快捷键"
+  },
+
+  "shortcut_current_prefix": {
+    "message": "当前："
+  },
+  "shortcut_record_btn": {
+    "message": "录制快捷键"
+  },
+  "shortcut_reset_btn": {
+    "message": "恢复默认"
+  },
+  "shortcut_input_placeholder": {
+    "message": "点击「录制快捷键」后在此按下组合键"
+  },
+  "shortcut_recording_placeholder": {
+    "message": "请按下组合键..."
+  },
+
+  "toast_link_copied": {
+    "message": "链接已复制到剪贴板"
+  },
+  "toast_deleted": {
+    "message": "片段已删除"
+  },
+  "toast_delete_failed": {
+    "message": "删除失败"
+  },
+  "toast_exported": {
+    "message": "数据已导出"
+  },
+  "toast_export_failed": {
+    "message": "导出失败"
+  },
+  "toast_cleared": {
+    "message": "已清空所有片段"
+  },
+  "toast_clear_failed": {
+    "message": "清空失败"
+  },
+  "toast_refreshed": {
+    "message": "已刷新保存按钮"
+  },
+  "toast_refresh_failed": {
+    "message": "刷新失败"
+  },
+  "toast_shortcut_reset": {
+    "message": "已恢复默认快捷键"
+  },
+  "toast_shortcut_conflict": {
+    "message": "与保存/移除快捷键冲突，请换用其他组合"
+  },
+
+  "confirm_delete": {
+    "message": "确定要删除这条片段吗？"
+  },
+  "confirm_clear_all": {
+    "message": "确定要清空所有保存的片段吗？此操作不可恢复！"
+  },
+
+  "tweet_copy_link": {
+    "message": "复制链接"
+  },
+  "tweet_delete": {
+    "message": "删除"
+  },
+
+  "content_save_btn_label": {
+    "message": "保存片段"
+  },
+  "content_saved_btn_label": {
+    "message": "已保存片段"
+  },
+  "content_extension_invalidated": {
+    "message": "扩展已重新加载，请刷新页面后重试"
+  },
+  "content_thread_join_failed": {
+    "message": "加入回复串失败: $ERROR$",
+    "placeholders": {
+      "error": { "content": "$1" }
+    }
+  },
+  "content_extract_failed": {
+    "message": "无法提取片段信息"
+  },
+  "content_save_failed": {
+    "message": "保存失败，请重试"
+  },
+  "content_saved": {
+    "message": "片段已保存！"
+  },
+  "content_thread_formed": {
+    "message": "已形成回复串，共 $COUNT$ 条",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "content_thread_joining": {
+    "message": "正在加入回复串…"
+  },
+  "content_thread_joined": {
+    "message": "已加入回复串，共 $COUNT$ 条",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "content_focus_hint_save": {
+    "message": "请将鼠标移到要保存的内容上"
+  },
+  "content_already_saved": {
+    "message": "该片段已保存"
+  },
+  "content_unsave_failed": {
+    "message": "移除失败，请重试"
+  },
+  "content_unsaved": {
+    "message": "已移除保存"
+  },
+  "content_focus_hint_unsave": {
+    "message": "请将鼠标移到要操作的内容上"
+  },
+  "content_not_saved": {
+    "message": "该片段未保存"
+  },
+  "content_focus_hint_redetect": {
+    "message": "请将鼠标移到要重判类型的内容上"
+  },
+  "content_type_updated": {
+    "message": "类型已更新为 $TYPE$",
+    "placeholders": {
+      "type": { "content": "$1" }
+    }
+  },
+  "content_shortcut_conflict": {
+    "message": "快捷键冲突，请在设置中修改"
+  },
+  "content_refresh_btn_label": {
+    "message": "刷新保存按钮"
+  },
+  "content_refreshing": {
+    "message": "正在刷新保存按钮..."
+  },
+  "content_refresh_done": {
+    "message": "刷新完成！"
+  }
+}

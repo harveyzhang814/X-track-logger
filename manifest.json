@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0NrS69vgd2WqeGsKPndGVkaekQHOoqxLztEEcKlP3ZmHyezU0LafU6qhLl45hRAsGonw4gAt9GPgyhkvFqYe3DFOWHDQHXhCRw8jbsAzlNJWUYNwTuxDNgBXlnDK79MqzEO2OVNcbUq9hjsIAkU9XGmiEcpXCdhb8pQhmmiAH0/btmtSZ0kAnnoxmsgntv9oPniLM2q0XU4FpIZLzGMI49LAFDmhPLc6UgCqSxv2lyAG4BUCK3DxdPt7SXgB0w7mM0BfUUP8UfV8d0+566OiVmMpKlEK2Uf4XFOOnZeKoUST6a/mVJm3ayAJVo/KChX2x0+LG9ZnvkEoO79TyZ+7mQIDAQAB",
-  "name": "X推文追踪器",
-  "version": "1.0.0",
-  "description": "手动记录和保存X推文、回复和repost到本地",
+  "name": "__MSG_app_name__",
+  "version": "2.0.0",
+  "description": "__MSG_app_description__",
+  "default_locale": "zh_CN",
   "permissions": [
     "storage",
     "activeTab",

@@ -1,4 +1,4 @@
-// X推文追踪器 - 存储管理模块
+// FigClip - 存储管理模块
 // 使用 chrome.storage.local 作为存储方案，确保重新安装扩展后数据不丢失
 
 class TweetStorage {
@@ -24,13 +24,13 @@ class TweetStorage {
         const result = await chrome.storage.local.get([this.storageKey]);
         if (!result[this.storageKey]) {
           await chrome.storage.local.set({ [this.storageKey]: {} });
-          console.log('[X推文追踪器] Chrome Storage 初始化成功（新建）');
+          console.log('[FigClip] Chrome Storage 初始化成功（新建）');
         } else {
-          console.log('[X推文追踪器] Chrome Storage 初始化成功（已有数据）');
+          console.log('[FigClip] Chrome Storage 初始化成功（已有数据）');
         }
         return;
       } catch (error) {
-        console.error('[X推文追踪器] Chrome Storage 初始化失败:', error);
+        console.error('[FigClip] Chrome Storage 初始化失败:', error);
         throw new Error(`Chrome Storage 初始化失败: ${error.message}`);
       }
     })();
@@ -45,13 +45,13 @@ class TweetStorage {
     return new Promise((resolve, reject) => {
       chrome.storage.local.get([this.storageKey], (result) => {
         if (chrome.runtime.lastError) {
-          console.error('[X推文追踪器] 读取 Chrome Storage 失败:', chrome.runtime.lastError);
+          console.error('[FigClip] 读取 Chrome Storage 失败:', chrome.runtime.lastError);
           reject(chrome.runtime.lastError);
           return;
         }
 
         const tweets = result[this.storageKey] || {};
-        console.log(`[X推文追踪器] 从 Chrome Storage 加载了 ${Object.keys(tweets).length} 条推文`);
+        console.log(`[FigClip] 从 Chrome Storage 加载了 ${Object.keys(tweets).length} 条片段`);
         resolve(tweets);
       });
     });
@@ -65,7 +65,7 @@ class TweetStorage {
       // 先获取现有数据
       chrome.storage.local.get([this.storageKey], (result) => {
         if (chrome.runtime.lastError) {
-          console.error('[X推文追踪器] 读取 Chrome Storage 失败:', chrome.runtime.lastError);
+          console.error('[FigClip] 读取 Chrome Storage 失败:', chrome.runtime.lastError);
           reject(chrome.runtime.lastError);
           return;
         }
@@ -77,12 +77,12 @@ class TweetStorage {
         // 保存更新后的数据
         chrome.storage.local.set({ [this.storageKey]: tweets }, () => {
           if (chrome.runtime.lastError) {
-            console.error('[X推文追踪器] 保存到 Chrome Storage 失败:', chrome.runtime.lastError);
+            console.error('[FigClip] 保存到 Chrome Storage 失败:', chrome.runtime.lastError);
             reject(chrome.runtime.lastError);
             return;
           }
 
-          console.log(`[X推文追踪器] 推文已保存到 Chrome Storage: ${tweetInfo.id}`);
+          console.log(`[FigClip] 片段已保存到 Chrome Storage: ${tweetInfo.id}`);
           resolve(true);
         });
       });
@@ -97,7 +97,7 @@ class TweetStorage {
       // 先获取现有数据
       chrome.storage.local.get([this.storageKey], (result) => {
         if (chrome.runtime.lastError) {
-          console.error('[X推文追踪器] 读取 Chrome Storage 失败:', chrome.runtime.lastError);
+          console.error('[FigClip] 读取 Chrome Storage 失败:', chrome.runtime.lastError);
           reject(chrome.runtime.lastError);
           return;
         }
@@ -108,7 +108,7 @@ class TweetStorage {
         // 保存更新后的数据
         chrome.storage.local.set({ [this.storageKey]: tweets }, () => {
           if (chrome.runtime.lastError) {
-            console.error('[X推文追踪器] 保存到 Chrome Storage 失败:', chrome.runtime.lastError);
+            console.error('[FigClip] 保存到 Chrome Storage 失败:', chrome.runtime.lastError);
             reject(chrome.runtime.lastError);
             return;
           }
@@ -126,7 +126,7 @@ class TweetStorage {
     return new Promise((resolve, reject) => {
       chrome.storage.local.get([this.storageKey], (result) => {
         if (chrome.runtime.lastError) {
-          console.error('[X推文追踪器] 读取 Chrome Storage 失败:', chrome.runtime.lastError);
+          console.error('[FigClip] 读取 Chrome Storage 失败:', chrome.runtime.lastError);
           resolve(false);
           return;
         }
@@ -144,7 +144,7 @@ class TweetStorage {
     return new Promise((resolve, reject) => {
       chrome.storage.local.getBytesInUse([this.storageKey], (bytes) => {
         if (chrome.runtime.lastError) {
-          console.error('[X推文追踪器] 获取存储使用量失败:', chrome.runtime.lastError);
+          console.error('[FigClip] 获取存储使用量失败:', chrome.runtime.lastError);
           // 如果获取失败，尝试手动计算
           chrome.storage.local.get([this.storageKey], (result) => {
             if (chrome.runtime.lastError) {
@@ -177,7 +177,7 @@ class TweetStorage {
     return new Promise((resolve, reject) => {
       chrome.storage.local.set({ [this.storageKey]: {} }, () => {
         if (chrome.runtime.lastError) {
-          console.error('[X推文追踪器] 清空 Chrome Storage 失败:', chrome.runtime.lastError);
+          console.error('[FigClip] 清空 Chrome Storage 失败:', chrome.runtime.lastError);
           reject(chrome.runtime.lastError);
           return;
         }

@@ -1,16 +1,30 @@
-// X推文追踪器 - Popup脚本
+// FigClip - Popup脚本
+
+const i18n = (key, ...subs) => chrome.i18n.getMessage(key, subs);
+
+function initI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = i18n(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = i18n(el.dataset.i18nTitle);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = i18n(el.dataset.i18nPlaceholder);
+  });
+}
 
 let savedTweets = {};
 let currentFilter = 'all';
 
-// 保存焦点推文快捷键（与 content.js 一致）
-const SHORTCUT_STORAGE_KEY = 'xTrackerSaveFocusedShortcut';
+// 保存焦点片段快捷键（与 content.js 一致）
+const SHORTCUT_STORAGE_KEY = 'figclipSaveFocusedShortcut';
 const DEFAULT_SHORTCUT = { key: 'S', ctrlKey: true, shiftKey: true, altKey: false, metaKey: false };
-// 移除焦点已保存记录快捷键
-const UNSAVE_SHORTCUT_STORAGE_KEY = 'xTrackerUnsaveFocusedShortcut';
+// 移除焦点已保存片段快捷键
+const UNSAVE_SHORTCUT_STORAGE_KEY = 'figclipUnsaveFocusedShortcut';
 const DEFAULT_UNSAVE_SHORTCUT = { key: 'D', ctrlKey: true, shiftKey: true, altKey: false, metaKey: false };
-// 重新判断焦点推文类型快捷键
-const REDETECT_TYPE_STORAGE_KEY = 'xTrackerRedetectTypeShortcut';
+// 重新判断焦点片段类型快捷键
+const REDETECT_TYPE_STORAGE_KEY = 'figclipRedetectTypeShortcut';
 const DEFAULT_REDETECT_SHORTCUT = { key: 'T', ctrlKey: true, shiftKey: true, altKey: false, metaKey: false };
 
 function shortcutsEqual(a, b) {
@@ -46,7 +60,7 @@ function loadShortcutSetting() {
 
 function updateShortcutDisplay(shortcut) {
   const el = document.getElementById('shortcutDisplay');
-  if (el) el.textContent = '当前：' + shortcutToDisplayString(shortcut);
+  if (el) el.textContent = i18n('shortcut_current_prefix') + shortcutToDisplayString(shortcut);
 }
 
 function saveShortcutToStorage(shortcut) {
@@ -64,7 +78,7 @@ function loadUnsaveShortcutSetting() {
 
 function updateUnsaveShortcutDisplay(shortcut) {
   const el = document.getElementById('shortcutDisplayUnsave');
-  if (el) el.textContent = '当前：' + shortcutToDisplayString(shortcut);
+  if (el) el.textContent = i18n('shortcut_current_prefix') + shortcutToDisplayString(shortcut);
 }
 
 function saveUnsaveShortcutToStorage(shortcut) {
@@ -82,7 +96,7 @@ function loadRedetectTypeShortcutSetting() {
 
 function updateRedetectTypeShortcutDisplay(shortcut) {
   const el = document.getElementById('shortcutDisplayRedetect');
-  if (el) el.textContent = '当前：' + shortcutToDisplayString(shortcut);
+  if (el) el.textContent = i18n('shortcut_current_prefix') + shortcutToDisplayString(shortcut);
 }
 
 function saveRedetectTypeShortcutToStorage(shortcut) {
@@ -102,18 +116,18 @@ function updateStorageStatus(status, message = '') {
   switch (status) {
     case 'ready':
       statusIndicator.classList.add('ready');
-      statusText.textContent = 'Chrome Storage 已就绪';
+      statusText.textContent = i18n('popup_status_ready');
       break;
     case 'loading':
       statusIndicator.classList.add('loading');
-      statusText.textContent = message || '正在初始化 Chrome Storage...';
+      statusText.textContent = message || i18n('popup_status_initializing');
       break;
     case 'error':
       statusIndicator.classList.add('error');
-      statusText.textContent = `Chrome Storage 错误: ${message || '初始化失败'}`;
+      statusText.textContent = i18n('popup_status_error', message || i18n('popup_unknown'));
       break;
     default:
-      statusText.textContent = message || '未知状态';
+      statusText.textContent = message || i18n('popup_unknown');
   }
 }
 
@@ -121,7 +135,7 @@ function updateStorageStatus(status, message = '') {
 async function loadTweets() {
   try {
     // 更新状态为加载中
-    updateStorageStatus('loading', '正在加载数据...');
+    updateStorageStatus('loading', i18n('popup_status_loading'));
     
     // 通过消息传递从 background script 获取数据
     const response = await new Promise((resolve, reject) => {
@@ -140,10 +154,10 @@ async function loadTweets() {
     });
     
     savedTweets = response.tweets || {};
-    console.log('[X推文追踪器] Popup 加载的推文:', Object.keys(savedTweets).length, '条');
+    console.log('[FigClip] Popup 加载的片段:', Object.keys(savedTweets).length, '条');
     
     if (Object.keys(savedTweets).length > 0) {
-      console.log('[X推文追踪器] 推文ID列表（前5个）:', Object.keys(savedTweets).slice(0, 5));
+      console.log('[FigClip] 片段ID列表（前5个）:', Object.keys(savedTweets).slice(0, 5));
     }
     
     updateStorageStatus('ready');
@@ -165,19 +179,19 @@ async function loadTweets() {
 async function updateStorageUsage() {
   try {
     const response = await new Promise((resolve) => {
-      chrome.runtime.sendMessage(
+        chrome.runtime.sendMessage(
         { action: 'getStorageUsage' },
         (response) => {
           if (chrome.runtime.lastError) {
-            resolve({ usage: '未知' });
+            resolve({ usage: i18n('popup_unknown') });
           } else {
-            resolve(response || { usage: '未知' });
+            resolve(response || { usage: i18n('popup_unknown') });
           }
         }
       );
     });
     
-    const usage = response.usage || '未知';
+    const usage = response.usage || i18n('popup_unknown');
     const statsElement = document.querySelector('.stats');
     if (statsElement) {
       const usageElement = document.getElementById('storageUsage');
@@ -210,7 +224,7 @@ function renderTweets() {
   // 按保存时间倒序排列
   filteredTweets.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
   
-  tweetCount.textContent = `${filteredTweets.length} 条推文`;
+  tweetCount.textContent = `${filteredTweets.length} ${i18n('popup_count_suffix')}`;
   
   if (filteredTweets.length === 0) {
     tweetsList.innerHTML = `
@@ -218,8 +232,8 @@ function renderTweets() {
         <svg viewBox="0 0 24 24" width="48" height="48" fill="currentColor" opacity="0.3">
           <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2zm0 15l-5-2.18L7 18V5h10v13z"/>
         </svg>
-        <p>还没有保存任何推文</p>
-        <p class="hint">在X网页上点击推文旁的"保存"按钮即可保存</p>
+        <p>${i18n('popup_empty_title')}</p>
+        <p class="hint">${i18n('popup_empty_hint')}</p>
       </div>
     `;
     return;
@@ -245,7 +259,7 @@ function renderTweets() {
       if (deleteBtn) {
         deleteBtn.addEventListener('click', async (e) => {
           e.stopPropagation();
-          if (confirm('确定要删除这条推文吗？')) {
+          if (confirm(i18n('confirm_delete'))) {
             await deleteTweet(tweet.id);
           }
         });
@@ -258,7 +272,7 @@ function renderTweets() {
           e.stopPropagation();
           if (tweet.link) {
             await navigator.clipboard.writeText(tweet.link);
-            showToast('链接已复制到剪贴板');
+            showToast(i18n('toast_link_copied'));
           }
         });
       }
@@ -288,7 +302,7 @@ function createTweetHTML(tweet) {
     <div class="tweet-item" data-tweet-id="${tweet.id}">
       <div class="tweet-header">
         <div>
-          <span class="tweet-author">${escapeHtml(tweet.author.name || '未知')}</span>
+          <span class="tweet-author">${escapeHtml(tweet.author.name || i18n('popup_unknown'))}</span>
           <span class="tweet-handle">@${escapeHtml(tweet.author.handle || 'unknown')}</span>
         </div>
         <span class="tweet-type ${tweet.type}">${typeLabels[tweet.type] || tweet.type}</span>
@@ -297,7 +311,7 @@ function createTweetHTML(tweet) {
       ${tweet.quotedTweet ? `
         <div class="quoted-tweet">
           <div class="quoted-tweet-header">
-            <span class="quoted-tweet-author">${escapeHtml(tweet.quotedTweet.author.name || '未知')}</span>
+            <span class="quoted-tweet-author">${escapeHtml(tweet.quotedTweet.author.name || i18n('popup_unknown'))}</span>
             <span class="quoted-tweet-handle">@${escapeHtml(tweet.quotedTweet.author.handle || 'unknown')}</span>
           </div>
           <div class="quoted-tweet-text">${escapeHtml(tweet.quotedTweet.text)}</div>
@@ -306,12 +320,12 @@ function createTweetHTML(tweet) {
       <div class="tweet-meta">
         <span>${dateStr}</span>
         <div class="tweet-actions">
-          <button class="tweet-action-btn copy-btn" title="复制链接">
+          <button class="tweet-action-btn copy-btn" title="${i18n('tweet_copy_link')}">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
             </svg>
           </button>
-          <button class="tweet-action-btn delete-btn" title="删除">
+          <button class="tweet-action-btn delete-btn" title="${i18n('tweet_delete')}">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
             </svg>
@@ -347,13 +361,13 @@ async function deleteTweet(tweetId) {
     
     if (response.success) {
       await loadTweets();
-      showToast('推文已删除');
+      showToast(i18n('toast_deleted'));
     } else {
-      showToast('删除失败');
+      showToast(i18n('toast_delete_failed'));
     }
   } catch (error) {
     console.error('删除推文时出错:', error);
-    showToast('删除失败');
+    showToast(i18n('toast_delete_failed'));
   }
 }
 
@@ -380,22 +394,22 @@ async function exportData() {
     
     const a = document.createElement('a');
     a.href = url;
-    a.download = `x-tweets-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `figclip-backup-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    showToast('数据已导出');
+    showToast(i18n('toast_exported'));
   } catch (error) {
     console.error('导出数据时出错:', error);
-    showToast('导出失败');
+    showToast(i18n('toast_export_failed'));
   }
 }
 
 // 清空所有数据
 async function clearAll() {
-  if (confirm('确定要清空所有保存的推文吗？此操作不可恢复！')) {
+  if (confirm(i18n('confirm_clear_all'))) {
     try {
       const response = await new Promise((resolve) => {
         chrome.runtime.sendMessage(
@@ -412,13 +426,13 @@ async function clearAll() {
       
       if (response.success) {
         await loadTweets();
-        showToast('已清空所有推文');
+        showToast(i18n('toast_cleared'));
       } else {
-        showToast('清空失败');
+        showToast(i18n('toast_clear_failed'));
       }
     } catch (error) {
       console.error('清空数据时出错:', error);
-      showToast('清空失败');
+      showToast(i18n('toast_clear_failed'));
     }
   }
 }
@@ -466,13 +480,13 @@ async function refreshButtons() {
     });
     
     if (response.success) {
-      showToast('已刷新保存按钮');
+      showToast(i18n('toast_refreshed'));
     } else {
-      showToast('刷新失败');
+      showToast(i18n('toast_refresh_failed'));
     }
   } catch (error) {
     console.error('刷新按钮时出错:', error);
-    showToast('刷新失败');
+    showToast(i18n('toast_refresh_failed'));
   }
 }
 
@@ -516,13 +530,13 @@ function stopRecording() {
     recordingKeydown = null;
   }
   recordShortcutBtn.classList.remove('recording');
-  shortcutInput.placeholder = '点击「录制快捷键」后在此按下组合键';
+  shortcutInput.placeholder = i18n('shortcut_input_placeholder');
   shortcutInput.blur();
 }
 recordShortcutBtn.addEventListener('click', () => {
   stopRecording();
   shortcutInput.value = '';
-  shortcutInput.placeholder = '请按下组合键...';
+  shortcutInput.placeholder = i18n('shortcut_recording_placeholder');
   recordShortcutBtn.classList.add('recording');
   shortcutInput.focus();
   recordingKeydown = (e) => {
@@ -549,7 +563,7 @@ resetShortcutBtn.addEventListener('click', () => {
   saveShortcutToStorage(DEFAULT_SHORTCUT);
   updateShortcutDisplay(DEFAULT_SHORTCUT);
   shortcutInput.value = '';
-  showToast('已恢复默认快捷键');
+  showToast(i18n('toast_shortcut_reset'));
 });
 
 const shortcutDisplayUnsave = document.getElementById('shortcutDisplayUnsave');
@@ -564,13 +578,13 @@ function stopRecordingUnsave() {
     recordingKeydownUnsave = null;
   }
   recordShortcutBtnUnsave.classList.remove('recording');
-  shortcutInputUnsave.placeholder = '点击「录制快捷键」后在此按下组合键';
+  shortcutInputUnsave.placeholder = i18n('shortcut_input_placeholder');
   shortcutInputUnsave.blur();
 }
 recordShortcutBtnUnsave.addEventListener('click', () => {
   stopRecordingUnsave();
   shortcutInputUnsave.value = '';
-  shortcutInputUnsave.placeholder = '请按下组合键...';
+  shortcutInputUnsave.placeholder = i18n('shortcut_recording_placeholder');
   recordShortcutBtnUnsave.classList.add('recording');
   shortcutInputUnsave.focus();
   recordingKeydownUnsave = (e) => {
@@ -597,7 +611,7 @@ resetShortcutBtnUnsave.addEventListener('click', () => {
   saveUnsaveShortcutToStorage(DEFAULT_UNSAVE_SHORTCUT);
   updateUnsaveShortcutDisplay(DEFAULT_UNSAVE_SHORTCUT);
   shortcutInputUnsave.value = '';
-  showToast('已恢复默认快捷键');
+  showToast(i18n('toast_shortcut_reset'));
 });
 
 const shortcutDisplayRedetect = document.getElementById('shortcutDisplayRedetect');
@@ -613,7 +627,7 @@ function stopRecordingRedetect() {
   }
   if (recordShortcutBtnRedetect) recordShortcutBtnRedetect.classList.remove('recording');
   if (shortcutInputRedetect) {
-    shortcutInputRedetect.placeholder = '点击「录制快捷键」后在此按下组合键';
+    shortcutInputRedetect.placeholder = i18n('shortcut_input_placeholder');
     shortcutInputRedetect.blur();
   }
 }
@@ -621,7 +635,7 @@ if (recordShortcutBtnRedetect) {
   recordShortcutBtnRedetect.addEventListener('click', () => {
     stopRecordingRedetect();
     if (shortcutInputRedetect) shortcutInputRedetect.value = '';
-    if (shortcutInputRedetect) shortcutInputRedetect.placeholder = '请按下组合键...';
+    if (shortcutInputRedetect) shortcutInputRedetect.placeholder = i18n('shortcut_recording_placeholder');
     recordShortcutBtnRedetect.classList.add('recording');
     shortcutInputRedetect.focus();
     recordingKeydownRedetect = (e) => {
@@ -638,7 +652,7 @@ if (recordShortcutBtnRedetect) {
       };
       Promise.all([loadShortcutSetting(), loadUnsaveShortcutSetting()]).then(([saveS, unsaveS]) => {
         if (shortcutsEqual(shortcut, saveS) || shortcutsEqual(shortcut, unsaveS)) {
-          showToast('与保存/移除快捷键冲突，请换用其他组合');
+          showToast(i18n('toast_shortcut_conflict'));
           stopRecordingRedetect();
           return;
         }
@@ -656,19 +670,19 @@ if (resetShortcutBtnRedetect) {
     saveRedetectTypeShortcutToStorage(DEFAULT_REDETECT_SHORTCUT);
     updateRedetectTypeShortcutDisplay(DEFAULT_REDETECT_SHORTCUT);
     if (shortcutInputRedetect) shortcutInputRedetect.value = '';
-    showToast('已恢复默认快捷键');
+    showToast(i18n('toast_shortcut_reset'));
   });
 }
 
 // 初始化设置页的快捷键显示（若当前在设置页会由切换时加载）
 loadShortcutSetting().then((s) => {
-  if (shortcutDisplay) shortcutDisplay.textContent = '当前：' + shortcutToDisplayString(s);
+  if (shortcutDisplay) shortcutDisplay.textContent = i18n('shortcut_current_prefix') + shortcutToDisplayString(s);
 });
 loadUnsaveShortcutSetting().then((s) => {
-  if (shortcutDisplayUnsave) shortcutDisplayUnsave.textContent = '当前：' + shortcutToDisplayString(s);
+  if (shortcutDisplayUnsave) shortcutDisplayUnsave.textContent = i18n('shortcut_current_prefix') + shortcutToDisplayString(s);
 });
 loadRedetectTypeShortcutSetting().then((s) => {
-  if (shortcutDisplayRedetect) shortcutDisplayRedetect.textContent = '当前：' + shortcutToDisplayString(s);
+  if (shortcutDisplayRedetect) shortcutDisplayRedetect.textContent = i18n('shortcut_current_prefix') + shortcutToDisplayString(s);
 });
 
 // 监听存储变化（通过轮询检查，因为IndexedDB没有change事件）
@@ -689,5 +703,6 @@ setInterval(() => {
 }, 2000); // 每2秒检查一次
 
 // 初始化
+initI18n();
 loadTweets();
 

@@ -1,12 +1,14 @@
-// X推文追踪器 - Content Script
+// FigClip - Content Script
 (function() {
   'use strict';
   
   // 检查Chrome扩展API是否可用
   if (typeof chrome === 'undefined' || !chrome.runtime) {
-    console.error('[X推文追踪器] Chrome扩展API不可用，请确保扩展已正确安装');
+    console.error('[FigClip] Chrome扩展API不可用，请确保扩展已正确安装');
     return;
   }
+
+  const i18n = (key, ...subs) => chrome.i18n.getMessage(key, subs);
 
   // 存储已处理的推文ID，避免重复添加按钮
   const processedTweets = new Set();
@@ -21,17 +23,17 @@
   let currentFocusTweet = null;
 
   // 保存焦点推文快捷键配置（从 storage 读取，无则用默认）
-  const SHORTCUT_STORAGE_KEY = 'xTrackerSaveFocusedShortcut';
+  const SHORTCUT_STORAGE_KEY = 'figclipSaveFocusedShortcut';
   const DEFAULT_SHORTCUT = { key: 'S', ctrlKey: true, shiftKey: true, altKey: false, metaKey: false };
   let saveFocusedShortcut = { ...DEFAULT_SHORTCUT };
 
   // 移除焦点已保存记录快捷键配置
-  const UNSAVE_SHORTCUT_STORAGE_KEY = 'xTrackerUnsaveFocusedShortcut';
+  const UNSAVE_SHORTCUT_STORAGE_KEY = 'figclipUnsaveFocusedShortcut';
   const DEFAULT_UNSAVE_SHORTCUT = { key: 'D', ctrlKey: true, shiftKey: true, altKey: false, metaKey: false };
   let unsaveFocusedShortcut = { ...DEFAULT_UNSAVE_SHORTCUT };
 
   // 重新判断焦点推文类型快捷键配置
-  const REDETECT_TYPE_STORAGE_KEY = 'xTrackerRedetectTypeShortcut';
+  const REDETECT_TYPE_STORAGE_KEY = 'figclipRedetectTypeShortcut';
   const DEFAULT_REDETECT_SHORTCUT = { key: 'T', ctrlKey: true, shiftKey: true, altKey: false, metaKey: false };
   let redetectTypeShortcut = { ...DEFAULT_REDETECT_SHORTCUT };
 
@@ -206,7 +208,7 @@
       }
 
       if (DEBUG_TYPE_DETECTION && tweetId) {
-        console.log('[X推文追踪器] type=', tweetType, ', signals:', JSON.stringify(signals));
+        console.log('[FigClip] type=', tweetType, ', signals:', JSON.stringify(signals));
       }
 
       // 获取转推的原始作者（如果是repost）
@@ -259,7 +261,7 @@
     const button = document.createElement('button');
     button.className = SAVE_BUTTON_CLASS;
     button.type = 'button'; // 防止表单提交
-    button.setAttribute('aria-label', '保存推文');
+    button.setAttribute('aria-label', i18n('content_save_btn_label'));
     button.innerHTML = `
       <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
         <path d="${SAVE_ICON_PATH}"/>
@@ -275,7 +277,7 @@
     const button = document.createElement('button');
     button.className = SAVED_BUTTON_CLASS;
     button.type = 'button'; // 防止表单提交
-    button.setAttribute('aria-label', '已保存推文');
+    button.setAttribute('aria-label', i18n('content_saved_btn_label'));
     button.innerHTML = `
       <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
         <path d="${SAVE_ICON_PATH}"/>
@@ -290,7 +292,7 @@
   function handleExtensionInvalidated(error) {
     if (error && String(error.message || error).includes('invalidated')) {
       if (typeof showNotification === 'function') {
-        showNotification('扩展已重新加载，请刷新页面后重试');
+        showNotification(i18n('content_extension_invalidated'));
       }
     }
   }
@@ -337,7 +339,7 @@
               }
               const success = response?.success || false;
               if (success) {
-                console.log('[X推文追踪器] 推文已保存:', tweetInfo.id);
+                console.log('[FigClip] 推文已保存:', tweetInfo.id);
                 try {
                   chrome.runtime.sendMessage({
                     action: 'tweetSaved',
@@ -606,16 +608,16 @@
       // 如果还是找不到，延迟重试（可能是动态加载的）
       if (!actionBar) {
         if (retryCount < 3) {
-          console.warn('[X推文追踪器] 未找到操作栏，推文ID:', tweetId, `将在${(retryCount + 1) * 500}ms后重试 (${retryCount + 1}/3)`);
+          console.warn('[FigClip] 未找到操作栏，推文ID:', tweetId, `将在${(retryCount + 1) * 500}ms后重试 (${retryCount + 1}/3)`);
           // 延迟重试，每次重试间隔递增
           setTimeout(() => {
             addSaveButtonToTweet(tweetElement, retryCount + 1).catch(err => {
-              console.error('[X推文追踪器] 延迟重试添加按钮失败:', err);
+              console.error('[FigClip] 延迟重试添加按钮失败:', err);
             });
           }, (retryCount + 1) * 500);
           return;
         } else {
-          console.error('[X推文追踪器] 多次重试后仍无法找到操作栏，推文ID:', tweetId);
+          console.error('[FigClip] 多次重试后仍无法找到操作栏，推文ID:', tweetId);
           // 从processedTweets中移除，允许后续手动刷新
           processedTweets.delete(tweetId);
           return;
@@ -648,14 +650,14 @@
         try {
           await handleAddToThread(tweetElement);
         } catch (err) {
-          console.error('[X推文追踪器] 加入回复串失败:', err);
-          showNotification('加入回复串失败: ' + (err && err.message ? err.message : '未知错误'));
+          console.error('[FigClip] 加入回复串失败:', err);
+          showNotification(i18n('content_thread_join_failed', err && err.message ? err.message : i18n('popup_unknown')));
         }
         return;
       }
       const tweetInfo = extractTweetInfo(tweetElement);
       if (!tweetInfo) {
-        alert('无法提取推文信息');
+        alert(i18n('content_extract_failed'));
         return;
       }
 
@@ -681,9 +683,9 @@
           // 重新绑定事件
           newButton.addEventListener('click', handleButtonClick);
           // 显示保存成功提示
-          showNotification('推文已保存！');
+          showNotification(i18n('content_saved'));
         } else {
-          alert('保存失败，请重试');
+          alert(i18n('content_save_failed'));
         }
       }
     }
@@ -694,7 +696,7 @@
       actionBar.appendChild(buttonContainer);
       // processedTweets.add(tweetId) 已经在函数开始处执行，这里不需要重复添加
     } catch (error) {
-      console.error('[X推文追踪器] 添加保存按钮时出错:', error);
+      console.error('[FigClip] 添加保存按钮时出错:', error);
     }
   }
 
@@ -771,7 +773,7 @@
     }
     const n = sorted.length;
     threadBuffer = [];
-    showNotification('已形成回复串，共 ' + n + ' 条');
+    showNotification(i18n('content_thread_formed', String(n)));
     if (typeof forceRefreshButtons === 'function') {
       forceRefreshButtons();
     }
@@ -779,15 +781,15 @@
 
   // 手动回复串：Shift+点击时加入当前推文到串
   async function handleAddToThread(tweetElement) {
-    showNotification('正在加入回复串…');
+    showNotification(i18n('content_thread_joining'));
     try {
       const tweetInfo = extractTweetInfo(tweetElement);
       if (!tweetInfo) {
-        showNotification('无法提取推文信息');
+        showNotification(i18n('content_extract_failed'));
         return;
       }
       if (threadBuffer.some((item) => item.id === tweetInfo.id)) {
-        showNotification('已加入回复串，共 ' + threadBuffer.length + ' 条');
+        showNotification(i18n('content_thread_joined', String(threadBuffer.length)));
         if (threadFinalizeTimer) clearTimeout(threadFinalizeTimer);
         threadFinalizeTimer = setTimeout(finalizeThread, THREAD_FINALIZE_DELAY_MS);
         return;
@@ -796,7 +798,7 @@
       if (!alreadySaved) {
         const success = await saveTweet(tweetInfo);
         if (!success) {
-          showNotification('保存失败，请重试');
+          showNotification(i18n('content_save_failed'));
           return;
         }
       }
@@ -804,10 +806,10 @@
       threadBuffer.push({ id: tweetInfo.id, date });
       if (threadFinalizeTimer) clearTimeout(threadFinalizeTimer);
       threadFinalizeTimer = setTimeout(finalizeThread, THREAD_FINALIZE_DELAY_MS);
-      showNotification('已加入回复串，共 ' + threadBuffer.length + ' 条');
+      showNotification(i18n('content_thread_joined', String(threadBuffer.length)));
     } catch (err) {
-      console.error('[X推文追踪器] handleAddToThread:', err);
-      showNotification('加入回复串失败: ' + (err && err.message ? err.message : '未知错误'));
+      console.error('[FigClip] handleAddToThread:', err);
+      showNotification(i18n('content_thread_join_failed', err && err.message ? err.message : i18n('popup_unknown')));
     }
   }
 
@@ -851,8 +853,8 @@
         try {
           await handleAddToThread(tweetElement);
         } catch (err) {
-          console.error('[X推文追踪器] 加入回复串失败:', err);
-          showNotification('加入回复串失败: ' + (err && err.message ? err.message : '未知错误'));
+          console.error('[FigClip] 加入回复串失败:', err);
+          showNotification(i18n('content_thread_join_failed', err && err.message ? err.message : i18n('popup_unknown')));
         }
         return;
       }
@@ -875,9 +877,9 @@
           const newBtn = createSavedButton(typeLabel);
           container.replaceChild(newBtn, currentBtn);
           newBtn.addEventListener('click', createTweetButtonClickHandler(tweetElement));
-          showNotification('推文已保存！');
+          showNotification(i18n('content_saved'));
         } else {
-          alert('保存失败，请重试');
+          alert(i18n('content_save_failed'));
         }
       }
     };
@@ -886,22 +888,22 @@
   // 快捷键：保存焦点推文
   async function saveFocusedTweetOnShortcut() {
     if (!currentFocusTweet) {
-      showNotification('请将鼠标移到要保存的推文上');
+      showNotification(i18n('content_focus_hint_save'));
       return;
     }
     const alreadySaved = currentFocusTweet.querySelector(`.${SAVED_BUTTON_CLASS}`);
     if (alreadySaved) {
-      showNotification('该推文已保存');
+      showNotification(i18n('content_already_saved'));
       return;
     }
     const tweetInfo = extractTweetInfo(currentFocusTweet);
     if (!tweetInfo) {
-      showNotification('无法提取推文信息');
+      showNotification(i18n('content_extract_failed'));
       return;
     }
     const success = await saveTweet(tweetInfo);
     if (!success) {
-      showNotification('保存失败，请重试');
+      showNotification(i18n('content_save_failed'));
       return;
     }
     const saveBtn = currentFocusTweet.querySelector(`.${SAVE_BUTTON_CLASS}`);
@@ -914,28 +916,28 @@
     }
     currentFocusTweet.classList.remove(FOCUS_HIGHLIGHT_UNSAVED);
     currentFocusTweet.classList.add(FOCUS_HIGHLIGHT_SAVED);
-    showNotification('推文已保存！');
+    showNotification(i18n('content_saved'));
   }
 
   // 快捷键：移除焦点已保存记录
   async function unsaveFocusedTweetOnShortcut() {
     if (!currentFocusTweet) {
-      showNotification('请将鼠标移到要操作的推文上');
+      showNotification(i18n('content_focus_hint_unsave'));
       return;
     }
     const savedBtn = currentFocusTweet.querySelector(`.${SAVED_BUTTON_CLASS}`);
     if (!savedBtn) {
-      showNotification('该推文未保存');
+      showNotification(i18n('content_not_saved'));
       return;
     }
     const tweetInfo = extractTweetInfo(currentFocusTweet);
     if (!tweetInfo) {
-      showNotification('无法提取推文信息');
+      showNotification(i18n('content_extract_failed'));
       return;
     }
     const success = await unsaveTweet(tweetInfo.id);
     if (!success) {
-      showNotification('移除失败，请重试');
+      showNotification(i18n('content_unsave_failed'));
       return;
     }
     const buttonContainer = savedBtn.parentElement;
@@ -945,18 +947,18 @@
     newBtn.addEventListener('click', createTweetButtonClickHandler(currentFocusTweet));
     currentFocusTweet.classList.remove(FOCUS_HIGHLIGHT_SAVED);
     currentFocusTweet.classList.add(FOCUS_HIGHLIGHT_UNSAVED);
-    showNotification('已移除保存');
+    showNotification(i18n('content_unsaved'));
   }
 
   // 快捷键：重新判断焦点推文类型
   async function redetectFocusedTweetType() {
     if (!currentFocusTweet) {
-      showNotification('请将鼠标移到要重判类型的推文上');
+      showNotification(i18n('content_focus_hint_redetect'));
       return;
     }
     const tweetInfo = extractTweetInfo(currentFocusTweet);
     if (!tweetInfo) {
-      showNotification('无法提取推文信息');
+      showNotification(i18n('content_extract_failed'));
       return;
     }
     const typeLabel = TYPE_LABELS[tweetInfo.type] || tweetInfo.type || 'Tweet';
@@ -972,7 +974,7 @@
     if (saved) {
       await saveTweet(tweetInfo);
     }
-    showNotification('类型已更新为 ' + typeLabel);
+    showNotification(i18n('content_type_updated', typeLabel));
   }
 
   // 加载快捷键配置并监听 storage 变化
@@ -1037,7 +1039,7 @@
       e.stopPropagation();
       const matchCount = (matchSave ? 1 : 0) + (matchUnsave ? 1 : 0) + (matchRedetect ? 1 : 0);
       if (matchCount >= 2) {
-        showNotification('快捷键冲突，请在设置中修改');
+        showNotification(i18n('content_shortcut_conflict'));
         return;
       }
       if (matchRedetect) {
@@ -1054,7 +1056,7 @@
   function processTweets() {
     try {
       const tweets = document.querySelectorAll('article[data-testid="tweet"]');
-      console.log(`[X推文追踪器] 找到 ${tweets.length} 条推文，开始处理`);
+      console.log(`[FigClip] 找到 ${tweets.length} 条推文，开始处理`);
       
       // 先检查已存在的按钮，更新processedTweets Set
       tweets.forEach((tweet) => {
@@ -1087,19 +1089,19 @@
             if (hasActionBar) {
               // 如果有操作栏，立即尝试添加按钮
               promises.push(addSaveButtonToTweet(tweet, 0).catch(error => {
-                console.error(`[X推文追踪器] 处理第${index + 1}条推文时出错:`, error);
+                console.error(`[FigClip] 处理第${index + 1}条推文时出错:`, error);
               }));
             } else {
               // 如果没有操作栏，延迟处理（可能是动态加载的）
               setTimeout(() => {
                 addSaveButtonToTweet(tweet, 0).catch(error => {
-                  console.error(`[X推文追踪器] 延迟处理第${index + 1}条推文时出错:`, error);
+                  console.error(`[FigClip] 延迟处理第${index + 1}条推文时出错:`, error);
                 });
               }, 500);
             }
           }
         } catch (error) {
-          console.error(`[X推文追踪器] 处理第${index + 1}条推文时出错:`, error);
+          console.error(`[FigClip] 处理第${index + 1}条推文时出错:`, error);
         }
       });
       
@@ -1108,7 +1110,7 @@
         // 忽略错误，因为已经在上面处理了
       });
     } catch (error) {
-      console.error('[X推文追踪器] 处理推文时出错:', error);
+      console.error('[FigClip] 处理推文时出错:', error);
     }
   }
 
@@ -1171,7 +1173,7 @@
 
   // 强制刷新所有按钮（清空已处理记录并重新处理）
   function forceRefreshButtons() {
-    console.log('[X推文追踪器] 强制刷新保存按钮');
+    console.log('[FigClip] 强制刷新保存按钮');
     // 清空已处理的推文记录
     processedTweets.clear();
     // 重新处理所有推文
@@ -1243,8 +1245,8 @@
 
     const refreshBtn = document.createElement('button');
     refreshBtn.className = 'x-tracker-floating-btn';
-    refreshBtn.setAttribute('aria-label', '刷新保存按钮');
-    refreshBtn.setAttribute('title', '刷新保存按钮');
+    refreshBtn.setAttribute('aria-label', i18n('content_refresh_btn_label'));
+    refreshBtn.setAttribute('title', i18n('content_refresh_btn_label'));
     refreshBtn.innerHTML = `
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
@@ -1260,19 +1262,19 @@
       forceRefreshButtons();
       
       // 显示提示
-      showNotification('正在刷新保存按钮...');
+      showNotification(i18n('content_refreshing'));
       
       // 1秒后移除加载动画
       setTimeout(() => {
         refreshBtn.classList.remove('loading');
-        showNotification('刷新完成！');
+        showNotification(i18n('content_refresh_done'));
       }, 1000);
     });
 
     widget.appendChild(refreshBtn);
     document.body.appendChild(widget);
 
-    console.log('[X推文追踪器] 悬浮窗已创建');
+    console.log('[FigClip] 悬浮窗已创建');
   }
 
   // 初始化
@@ -1321,7 +1323,7 @@
       
       // 监听浏览器前进/后退事件（SPA导航）
       window.addEventListener('popstate', () => {
-        console.log('[X推文追踪器] 检测到页面导航（popstate），重新处理推文');
+        console.log('[FigClip] 检测到页面导航（popstate），重新处理推文');
         // 延迟处理，等待页面内容更新
         setTimeout(() => {
           processedTweets.clear();
@@ -1335,7 +1337,7 @@
       window.addEventListener('pageshow', (event) => {
         // event.persisted 为 true 表示页面是从缓存中恢复的
         if (event.persisted) {
-          console.log('[X推文追踪器] 页面从缓存恢复，重新处理推文');
+          console.log('[FigClip] 页面从缓存恢复，重新处理推文');
           setTimeout(() => {
             processedTweets.clear();
             processTweets();
@@ -1348,14 +1350,14 @@
       // 监听来自background script的刷新请求
       chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === 'refreshButtons') {
-          console.log('[X推文追踪器] 收到刷新按钮请求');
+          console.log('[FigClip] 收到刷新按钮请求');
           forceRefreshButtons();
           sendResponse({ success: true });
           return true;
         }
       });
     } catch (error) {
-      console.error('X推文追踪器初始化失败:', error);
+      console.error('FigClip 初始化失败:', error);
     }
   }
 

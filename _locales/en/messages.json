@@ -1,0 +1,204 @@
+{
+  "app_name": {
+    "message": "FigClip"
+  },
+  "app_description": {
+    "message": "Lightweight text snippet recorder. Save web content locally with one click — fully offline, data never leaves your browser."
+  },
+
+  "popup_refresh_btn_title": {
+    "message": "Refresh save buttons"
+  },
+  "popup_export_btn_title": {
+    "message": "Export data"
+  },
+  "popup_clear_btn_title": {
+    "message": "Clear all"
+  },
+  "popup_settings_btn_title": {
+    "message": "Settings"
+  },
+  "popup_count_suffix": {
+    "message": "snippets"
+  },
+  "popup_status_initializing": {
+    "message": "Initializing Chrome Storage..."
+  },
+  "popup_status_ready": {
+    "message": "Chrome Storage ready"
+  },
+  "popup_status_loading": {
+    "message": "Loading data..."
+  },
+  "popup_status_error": {
+    "message": "Chrome Storage error: $ERROR$",
+    "placeholders": {
+      "error": { "content": "$1" }
+    }
+  },
+  "popup_empty_title": {
+    "message": "No snippets saved yet"
+  },
+  "popup_empty_hint": {
+    "message": "Click the \"Save\" button next to content on the page to save it"
+  },
+  "popup_unknown": {
+    "message": "Unknown"
+  },
+
+  "settings_title": {
+    "message": "Settings"
+  },
+  "settings_save_shortcut_label": {
+    "message": "Save focused snippet shortcut"
+  },
+  "settings_unsave_shortcut_label": {
+    "message": "Remove focused saved snippet shortcut"
+  },
+  "settings_redetect_shortcut_label": {
+    "message": "Re-detect focused snippet type shortcut"
+  },
+
+  "shortcut_current_prefix": {
+    "message": "Current: "
+  },
+  "shortcut_record_btn": {
+    "message": "Record shortcut"
+  },
+  "shortcut_reset_btn": {
+    "message": "Reset to default"
+  },
+  "shortcut_input_placeholder": {
+    "message": "Click \"Record shortcut\" then press a key combination"
+  },
+  "shortcut_recording_placeholder": {
+    "message": "Press a key combination..."
+  },
+
+  "toast_link_copied": {
+    "message": "Link copied to clipboard"
+  },
+  "toast_deleted": {
+    "message": "Snippet deleted"
+  },
+  "toast_delete_failed": {
+    "message": "Delete failed"
+  },
+  "toast_exported": {
+    "message": "Data exported"
+  },
+  "toast_export_failed": {
+    "message": "Export failed"
+  },
+  "toast_cleared": {
+    "message": "All snippets cleared"
+  },
+  "toast_clear_failed": {
+    "message": "Clear failed"
+  },
+  "toast_refreshed": {
+    "message": "Save buttons refreshed"
+  },
+  "toast_refresh_failed": {
+    "message": "Refresh failed"
+  },
+  "toast_shortcut_reset": {
+    "message": "Shortcut reset to default"
+  },
+  "toast_shortcut_conflict": {
+    "message": "Conflicts with save/remove shortcut, please choose another combination"
+  },
+
+  "confirm_delete": {
+    "message": "Delete this snippet?"
+  },
+  "confirm_clear_all": {
+    "message": "Clear all saved snippets? This cannot be undone!"
+  },
+
+  "tweet_copy_link": {
+    "message": "Copy link"
+  },
+  "tweet_delete": {
+    "message": "Delete"
+  },
+
+  "content_save_btn_label": {
+    "message": "Save snippet"
+  },
+  "content_saved_btn_label": {
+    "message": "Snippet saved"
+  },
+  "content_extension_invalidated": {
+    "message": "Extension reloaded, please refresh the page and try again"
+  },
+  "content_thread_join_failed": {
+    "message": "Failed to join thread: $ERROR$",
+    "placeholders": {
+      "error": { "content": "$1" }
+    }
+  },
+  "content_extract_failed": {
+    "message": "Could not extract snippet info"
+  },
+  "content_save_failed": {
+    "message": "Save failed, please try again"
+  },
+  "content_saved": {
+    "message": "Snippet saved!"
+  },
+  "content_thread_formed": {
+    "message": "Thread formed, $COUNT$ snippets total",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "content_thread_joining": {
+    "message": "Joining thread…"
+  },
+  "content_thread_joined": {
+    "message": "Added to thread, $COUNT$ snippets total",
+    "placeholders": {
+      "count": { "content": "$1" }
+    }
+  },
+  "content_focus_hint_save": {
+    "message": "Hover over the content you want to save"
+  },
+  "content_already_saved": {
+    "message": "This snippet is already saved"
+  },
+  "content_unsave_failed": {
+    "message": "Remove failed, please try again"
+  },
+  "content_unsaved": {
+    "message": "Snippet removed"
+  },
+  "content_focus_hint_unsave": {
+    "message": "Hover over the content you want to remove"
+  },
+  "content_not_saved": {
+    "message": "This snippet is not saved"
+  },
+  "content_focus_hint_redetect": {
+    "message": "Hover over the content to re-detect its type"
+  },
+  "content_type_updated": {
+    "message": "Type updated to $TYPE$",
+    "placeholders": {
+      "type": { "content": "$1" }
+    }
+  },
+  "content_shortcut_conflict": {
+    "message": "Shortcut conflict, please update in Settings"
+  },
+  "content_refresh_btn_label": {
+    "message": "Refresh save buttons"
+  },
+  "content_refreshing": {
+    "message": "Refreshing save buttons..."
+  },
+  "content_refresh_done": {
+    "message": "Refresh complete!"
+  }
+}
